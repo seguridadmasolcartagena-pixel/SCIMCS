@@ -382,7 +382,7 @@ const VALVE_GROUPS = [
     {n:29, p:'5204910',    item:'VPC.02', eq:'PUESTO CONTROL',       t:'COMPUERTA USILLO ASCENDENTE 2"', pos:'A', mx:14.8, my:38.2},
     {n:30, p:'5204873/4',  item:'VPC.03', eq:'PUESTO CONTROL',       t:'VALVULA BOLA 2"',                pos:'A', mx:12.9, my:38.2},
     {n:31, p:'1457785',    item:'VPC.04', eq:'ACORTINADOR DCS',      t:'DISPARO MANUAL',                 pos:'A', mx:36.5, my:31.0},
-    {n:32, p:'5204919/20', item:'VPC.05', eq:'ACORTINADOR DCS',      t:'VALVULA DE CORTE',               pos:'C', mx:35.8, my:28.2},
+    {n:32, p:'5204855/6',  item:'VPC.05', eq:'ACORTINADOR DCS',      t:'VALVULA DE CORTE',               pos:'C', mx:35.8, my:28.2},
     {n:33, p:'1457957/8',  item:'VPC.06', eq:'DEPOSITO ESPUMOGENO',  t:'ALIMENTACION TQ ESPUMOGENO',     pos:'A', mx:39.8, my:27.3},
     {n:34, p:'1457873',    item:'VPC.07', eq:'ACORTINADOR TQ O2',    t:'VALVULA DE ENTRADA',             pos:'A', mx:18.5, my:14.6},
     {n:35, p:'5204886/7',  item:'VPC.08', eq:'EXTINCIÓN RP',         t:'VALVULA DE ENTRADA',             pos:'A', mx:9.8,  my:20.5},
@@ -399,9 +399,9 @@ const VALVE_GROUPS = [
     {n:43, p:'5204878',     item:'VI.03', eq:'BOMBA DIESEL',    t:'IMPULSION 8"',                pos:'A', mx:84.4, my:44.0},
     {n:44, p:'5204911',     item:'V/V Recirculacion 01', eq:'TANQUE', t:'Recirculación a tanque', pos:'A', mx:91.5, my:37.8},
     {n:45, p:'5204858/9',   item:'V/V Recirculacion 02', eq:'TANQUE', t:'Recirculación a tanque', pos:'C', mx:91.5, my:49.0},
-    {n:46, p:'1457980',     item:'VT01', eq:'TANQUE', t:'ASPIRACION GENERAL',    pos:'A', mx:61.7, my:15.2},
-    {n:47, p:'1457979',     item:'VT02', eq:'TANQUE', t:'DRENAJE GENERAL',       pos:'C', mx:73.5, my:15.2},
-    {n:48, p:'1457674/5',   item:'VT03', eq:'TANQUE', t:'DRENAJE FONDO TANQUE',  pos:'C', mx:91.2, my:15.2},
+    {n:'',  p:'1457980',     item:'VT01', eq:'TANQUE', t:'ASPIRACION GENERAL',    pos:'A', mx:61.7, my:15.2},
+    {n:'',  p:'1457979',     item:'VT02', eq:'TANQUE', t:'DRENAJE GENERAL',       pos:'C', mx:73.5, my:15.2},
+    {n:'',  p:'1457674/5',   item:'VT03', eq:'TANQUE', t:'DRENAJE FONDO TANQUE',  pos:'C', mx:91.2, my:15.2},
     {n:46, p:'1457895',     item:'V/V Rociadores',       eq:'CASETA BOMBAS', t:'Rociadores sala bomba 1-1/4"', pos:'A', mx:68.3, my:55.2},
     {n:47, p:'5204894',     item:'V/V Seguridad',         eq:'', t:'Presostatos',               pos:'A', mx:73.3, my:30.4},
     {n:48, p:'5204895',     item:'',                      eq:'', t:'Refrigeración diesel p.',   pos:'A', mx:62.5, my:39.5},
@@ -413,7 +413,7 @@ const VALVE_GROUPS = [
     {n:54, p:'1457673',     item:'',                      eq:'', t:'Refrigeracion diesel 2"',   pos:'A', mx:84.4, my:50.0},
     {n:55, p:'1457759',     item:'',                      eq:'', t:'Manometro principal impulsion', pos:'A', mx:73.3, my:52.0},
     {n:56, p:'1457878',     item:'',                      eq:'', t:'Salida válv. 2º presostatos 3/4"', pos:'A', mx:77.0, my:52.0},
-    {n:57, p:'1457879',     item:'',                      eq:'', t:'Entrada válv. 2º presostatos 3/4"', pos:'A', mx:80.5, my:52.0},
+    {n:56, p:'1457879',     item:'',                      eq:'', t:'Entrada válv. 2º presostatos 3/4"', pos:'A', mx:80.5, my:52.0},
   ]}
 ];
 
@@ -528,7 +528,7 @@ function makeCard(v,gid,idx,r){
     </div>
     <div class="precinto-row">
       <span class="precinto-lbl">Precinto actual:</span>
-      <span class="precinto-val">${v.p||'—'}</span>
+      <span class="precinto-val">${getCurrentPrecinto(v.item||v.t, v.p)||'—'}</span>
     </div>
     ${dItem !== '—' ? `<button class="map-btn" onclick='openMap(${itemEnc})'>📍 Ver ubicación en plano</button>` : ''}
     <div class="valve-actions">
