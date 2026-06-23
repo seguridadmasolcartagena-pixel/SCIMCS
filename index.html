@@ -182,20 +182,6 @@ body{font-family:'Titillium Web',sans-serif;background:var(--gray-50);color:var(
 .toast.err{background:var(--red)}
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:2px}
-
-/* ── ADMIN ── */
-.admin-pin-input{background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);color:var(--gray-900);font-family:'Titillium Web',sans-serif;font-size:20px;font-weight:700;padding:14px 16px;width:100%;letter-spacing:3px;outline:none;text-align:center;}
-.admin-pin-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,196,0,.15);}
-.admin-pos-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--gray-100);}
-.admin-pos-row:last-child{border-bottom:none;}
-.admin-pos-info{flex:1;min-width:0;}
-.admin-pos-name{font-weight:700;font-size:15px;color:var(--blue);}
-.admin-pos-type{font-size:11px;color:var(--gray-500);margin-top:1px;}
-.admin-toggle{display:flex;border:1.5px solid var(--gray-200);border-radius:8px;overflow:hidden;flex-shrink:0;}
-.admin-toggle button{border:none;padding:8px 14px;font-family:'Titillium Web',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;background:white;color:var(--gray-500);}
-.admin-toggle button.active-a{background:var(--green);color:white;}
-.admin-toggle button.active-c{background:var(--red);color:white;}
-.admin-group-hdr{background:var(--blue-light);border-left:3px solid var(--blue);padding:8px 14px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue);margin-top:2px;}
 </style>
 </head>
 <body>
@@ -249,9 +235,6 @@ body{font-family:'Titillium Web',sans-serif;background:var(--gray-50);color:var(
     </div>
     <button class="btn-secondary" onclick="showHistory()">📋 Historial de inspecciones</button>
     <button class="btn-secondary" style="margin-top:8px" onclick="openMap(null)">🗺️ Ver plano de planta</button>
-    <button class="btn-secondary" style="margin-top:8px;border-color:#F5C400;color:#7a6000;" onclick="openAdminLogin()">🔧 Cambiar estado de válvulas</button>
-    <button class="btn-secondary" style="margin-top:8px;border-color:var(--blue);color:var(--blue);font-size:13px;" onclick="openSheetsConfig()">☁️ Configurar sincronización con Google Sheets</button>
-    <div id="cloud-status" style="margin-top:10px;font-size:12px;text-align:center;color:var(--gray-500);padding:6px;">☁️ Iniciando...</div>
   </div>
 </div>
 
@@ -338,39 +321,6 @@ body{font-family:'Titillium Web',sans-serif;background:var(--gray-50);color:var(
   </div>
 </div>
 
-
-<!-- ═══ ADMIN LOGIN ═══ -->
-<div class="modal-overlay" id="modal-admin-login">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-title">🔧 Acceso administrador</div>
-    <div class="modal-text">Introduce la clave para modificar el estado de las válvulas.</div>
-    <input id="admin-pin-input" class="admin-pin-input" type="password" placeholder="••••••••••••••••••" autocomplete="off">
-    <div id="admin-pin-error" style="color:var(--red);font-size:12px;margin-top:8px;display:none;">Clave incorrecta. Inténtalo de nuevo.</div>
-    <button class="btn-primary" style="margin-top:16px;margin-bottom:10px" onclick="checkAdminPin()">ACCEDER</button>
-    <button class="btn-secondary" onclick="closeAdminLogin()">Cancelar</button>
-  </div>
-</div>
-
-<!-- ═══ ADMIN PANEL ═══ -->
-<div id="screen-admin" class="screen">
-  <div class="app-header">
-    <button class="btn-back" onclick="showScreen('screen-home')">‹</button>
-    <div style="flex:1">
-      <div class="header-title">Estado de Válvulas</div>
-      <div class="header-sub">Modo administrador</div>
-    </div>
-    <div style="font-size:11px;color:rgba(255,255,255,.7);background:rgba(245,196,0,.2);padding:4px 10px;border-radius:6px;border:1px solid rgba(245,196,0,.4);">ADMIN</div>
-  </div>
-  <div style="background:var(--gold-light);border-bottom:1px solid var(--gold);padding:10px 16px;font-size:12px;color:#7a6000;font-weight:600;flex-shrink:0;">
-    ⚠️ Los cambios se guardan automáticamente y afectan a todas las inspecciones futuras.
-  </div>
-  <div style="flex:1;overflow-y:auto;padding-bottom:80px" id="admin-valve-list"></div>
-  <div style="position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--gray-100);padding:12px 16px;box-shadow:0 -4px 16px rgba(0,0,0,.08)">
-    <button class="btn-primary" onclick="saveAdminChanges()">✓ GUARDAR CAMBIOS Y SALIR</button>
-  </div>
-</div>
-
 <!-- ═══ CONFIRM MODAL ═══ -->
 <div class="modal-overlay" id="modal-confirm">
   <div class="modal-sheet">
@@ -393,75 +343,77 @@ body{font-family:'Titillium Web',sans-serif;background:var(--gray-50);color:var(
 // ═══════════════════════════════════════
 // VALVE DATA
 // ═══════════════════════════════════════
-// Coordinates calibrated manually via calibrador.html
+// Coordinates are % of image (2400x1612 cropped image)
+// Image covers: left portion = plant map, right portion = pump schematic
+// Plant map area in image: approx x=2.5%-51%, y=13%-86%
 const VALVE_GROUPS = [
   { id:'vh', name:'VÁLVULAS CORTE HIDRANTE', valves:[
-    {n:1,  p:'1457777',   item:'VH.01', eq:'HIDRANTE nº 1',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:44.97, my:48.02},
-    {n:2,  p:'1457776',   item:'VH.02', eq:'HIDRANTE nº 2',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:55.79, my:34.71},
-    {n:3,  p:'1457952',   item:'VH.03', eq:'HIDRANTE nº 3',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:33.33, my:30.18},
-    {n:4,  p:'1457769',   item:'VH.04', eq:'HIDRANTE nº 4',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:17.96, my:30.90},
-    {n:5,  p:'5204896',   item:'VH.05', eq:'HIDRANTE nº 5',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:12.52, my:48.32},
-    {n:6,  p:'5204883',   item:'VH.06', eq:'HIDRANTE nº 6',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:4.31,  my:65.99},
-    {n:7,  p:'5204854',   item:'VH.07', eq:'HIDRANTE nº 7',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:21.61, my:70.25},
-    {n:8,  p:'5204862',   item:'VH.08', eq:'HIDRANTE nº 8',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:37.86, my:70.25},
-    {n:9,  p:'5204898',   item:'VH.09', eq:'HIDRANTE nº 9',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:32.82, my:49.43},
-    {n:10, p:'1457665',   item:'VH.10', eq:'HIDRANTE nº 10',          t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:30.15, my:53.06},
-    {n:11, p:'5204823/4', item:'VH.11', eq:'HIDRANTE nº 11 (PUERTO)', t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'C', mx:50.99, my:13.33, obs:'Pendiente'},
+    {n:1,  p:'1457777',   item:'VH.01', eq:'HIDRANTE nº 1',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:36.5, my:27.9},
+    {n:2,  p:'1457776',   item:'VH.02', eq:'HIDRANTE nº 2',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:45.8, my:17.4},
+    {n:3,  p:'1457952',   item:'VH.03', eq:'HIDRANTE nº 3',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:29.2, my:12.7},
+    {n:4,  p:'1457769',   item:'VH.04', eq:'HIDRANTE nº 4',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:18.5, my:13.3},
+    {n:5,  p:'5204896',   item:'VH.05', eq:'HIDRANTE nº 5',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:10.0, my:30.1},
+    {n:6,  p:'5204883',   item:'VH.06', eq:'HIDRANTE nº 6',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:4.2,  my:43.4},
+    {n:7,  p:'5204854',   item:'VH.07', eq:'HIDRANTE nº 7',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:21.7, my:58.0},
+    {n:8,  p:'5204862',   item:'VH.08', eq:'HIDRANTE nº 8',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:38.1, my:58.0},
+    {n:9,  p:'5204898',   item:'VH.09', eq:'HIDRANTE nº 9',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:30.0, my:34.4},
+    {n:10, p:'1457665',   item:'VH.10', eq:'HIDRANTE nº 10',          t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:35.8, my:33.8},
+    {n:11, p:'5204823/4', item:'VH.11', eq:'HIDRANTE nº 11 (PUERTO)', t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'C', mx:4.4,  my:56.1, obs:'Pendiente'},
   ]},
   { id:'vs', name:'VÁLVULAS SECCIONAMIENTO RED AGUA CI', valves:[
-    {n:13, p:'1457973',   item:'VS.01', eq:'RED AGUA CI',    t:'SERVICIO VH.02 (CADENA)',        pos:'A', mx:46.03, my:37.57},
-    {n:14, p:'5204882',   item:'VS.02', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:33.86, my:40.12},
-    {n:15, p:'1457951',   item:'VS.03', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:37.16, my:28.91},
-    {n:16, p:'5204827',   item:'VS.04', eq:'BIES DE REFINO', t:'VALVULA BOLA 2"',                pos:'A', mx:38.05, my:38.85},
-    {n:17, p:'1457688',   item:'VS.05', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:47.40, my:52.76},
-    {n:18, p:'1457652',   item:'VS.06', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:38.29, my:51.59},
-    {n:21, p:'5204868',   item:'VS.07', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:10.48, my:51.87},
-    {n:20, p:'1457981',   item:'VS.08', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:7.94,  my:51.87},
-    {n:19, p:'5204832',   item:'VS.09', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:6.68,  my:53.50},
-    {n:22, p:'5204869',   item:'VS.10', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:7.29,  my:63.19},
-    {n:23, p:'5204870',   item:'VS.11', eq:'RED AGUA CI',    t:'COMPUERTA USILLO FIJO 6"',       pos:'A', mx:7.29,  my:65.69},
-    {n:24, p:'5204861',   item:'VS.12', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:47.75, my:68.01},
-    {n:25, p:'5204853',   item:'VS.13', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:47.81, my:65.25},
-    {n:26, p:'1457956',   item:'VS.14', eq:'RED AGUA CI',    t:'BY-PASS ESPUMOGENO',             pos:'C', mx:45.69, my:42.26},
-    {n:'', p:'',          item:'VS.15', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE',    pos:'A', mx:44.73, my:39.71},
+    {n:13, p:'1457973',    item:'VS.01', eq:'RED AGUA CI',    t:'SERVICIO VH.02 (CADENA)',         pos:'A', mx:42.3, my:24.8},
+    {n:14, p:'5204882',    item:'VS.02', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"',  pos:'A', mx:26.2, my:26.4},
+    {n:15, p:'1457951',    item:'VS.03', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 4"',  pos:'A', mx:27.3, my:21.7},
+    {n:16, p:'5204827',    item:'VS.04', eq:'BIES DE REFINO', t:'VALVULA BOLA 2"',                 pos:'A', mx:31.2, my:22.0},
+    {n:17, p:'1457688',    item:'VS.05', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"',  pos:'A', mx:47.3, my:38.5},
+    {n:18, p:'1457652',    item:'VS.06', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"',  pos:'A', mx:39.4, my:34.7},
+    {n:19, p:'5204832',    item:'VS.09', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"',  pos:'A', mx:8.3,  my:37.5},
+    {n:20, p:'1457981',    item:'VS.08', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"',  pos:'A', mx:8.1,  my:36.3},
+    {n:21, p:'5204868',    item:'VS.07', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"',  pos:'A', mx:7.7,  my:38.8},
+    {n:22, p:'5204869',    item:'VS.10', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"',  pos:'A', mx:6.5,  my:41.9},
+    {n:23, p:'5204870',    item:'VS.11', eq:'RED AGUA CI',    t:'COMPUERTA USILLO FIJO 6"',        pos:'A', mx:6.5,  my:44.7},
+    {n:24, p:'5204861',    item:'VS.12', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"',  pos:'A', mx:40.0, my:50.9},
+    {n:25, p:'5204853',    item:'VS.13', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"',  pos:'A', mx:40.0, my:48.7},
+    {n:26, p:'1457956',    item:'VS.14', eq:'RED AGUA CI',    t:'BY-PASS ESPUMOGENO',              pos:'C', mx:42.1, my:29.2},
+    {n:'', p:'',           item:'VS.15', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE',     pos:'A', mx:41.7, my:24.8},
   ]},
   { id:'vpc', name:'VÁLVULAS CORTE PUESTOS DE CONTROL', valves:[
-    {n:28, p:'5204914/5',  item:'VPC.01', eq:'PUESTO CONTROL',       t:'SALIDA TQ ESPUMOGENO HACIA BIO', pos:'A', mx:47.81, my:39.05},
-    {n:29, p:'5204910',    item:'VPC.02', eq:'PUESTO CONTROL',       t:'COMPUERTA USILLO ASCENDENTE 2"', pos:'A', mx:16.30, my:52.89},
-    {n:30, p:'5204873/4',  item:'VPC.03', eq:'PUESTO CONTROL',       t:'VALVULA BOLA 2"',                pos:'A', mx:14.11, my:52.84},
-    {n:31, p:'1457785',    item:'VPC.04', eq:'ACORTINADOR DCS',      t:'DISPARO MANUAL',                 pos:'A', mx:46.64, my:49.90},
-    {n:32, p:'5204919/20', item:'VPC.05', eq:'ACORTINADOR DCS',      t:'VALVULA DE CORTE',               pos:'C', mx:46.95, my:46.03},
-    {n:33, p:'1457957/8',  item:'VPC.06', eq:'DEPOSITO ESPUMOGENO',  t:'ALIMENTACION TQ ESPUMOGENO',     pos:'A', mx:47.81, my:42.36},
-    {n:34, p:'1457873',    item:'VPC.07', eq:'ACORTINADOR TQ O2',    t:'VALVULA DE ENTRADA',             pos:'A', mx:14.98, my:30.95},
-    {n:35, p:'5204886/7',  item:'VPC.08', eq:'EXTINCIÓN RP',         t:'VALVULA DE ENTRADA',             pos:'A', mx:13.41, my:37.62},
-    {n:36, p:'1457782/3',  item:'VPC.09', eq:'ACORTINADOR 07V1A/2A', t:'VALVULA DE ENTRADA 4"',          pos:'A', mx:18.80, my:52.84},
-    {n:37, p:'1457991/2',  item:'VPC.10', eq:'EXTINCIÓN TIERRAS',    t:'VALVULA DE ENTRADA',             pos:'A', mx:39.22, my:32.12},
-    {n:38, p:'1457778/9',  item:'VPC.11', eq:'DEPOSITO ESPUMOGENO',  t:'SALIDA TANQUE ESPUMA MIX 2"',    pos:'A', mx:49.42, my:40.68},
+    {n:28, p:'5204914/5',  item:'VPC.01', eq:'PUESTO CONTROL',       t:'SALIDA TQ ESPUMOGENO HACIA BIO', pos:'A', mx:42.1, my:23.9},
+    {n:29, p:'5204910',    item:'VPC.02', eq:'PUESTO CONTROL',       t:'COMPUERTA USILLO ASCENDENTE 2"', pos:'A', mx:14.8, my:38.2},
+    {n:30, p:'5204873/4',  item:'VPC.03', eq:'PUESTO CONTROL',       t:'VALVULA BOLA 2"',                pos:'A', mx:12.9, my:38.2},
+    {n:31, p:'1457785',    item:'VPC.04', eq:'ACORTINADOR DCS',      t:'DISPARO MANUAL',                 pos:'A', mx:36.5, my:31.0},
+    {n:32, p:'5204919/20', item:'VPC.05', eq:'ACORTINADOR DCS',      t:'VALVULA DE CORTE',               pos:'C', mx:35.8, my:28.2},
+    {n:33, p:'1457957/8',  item:'VPC.06', eq:'DEPOSITO ESPUMOGENO',  t:'ALIMENTACION TQ ESPUMOGENO',     pos:'A', mx:39.8, my:27.3},
+    {n:34, p:'1457873',    item:'VPC.07', eq:'ACORTINADOR TQ O2',    t:'VALVULA DE ENTRADA',             pos:'A', mx:18.5, my:14.6},
+    {n:35, p:'5204886/7',  item:'VPC.08', eq:'EXTINCIÓN RP',         t:'VALVULA DE ENTRADA',             pos:'A', mx:9.8,  my:20.5},
+    {n:36, p:'1457782/3',  item:'VPC.09', eq:'ACORTINADOR 07V1A/2A', t:'VALVULA DE ENTRADA 4"',          pos:'A', mx:15.6, my:38.5},
+    {n:37, p:'1457991/2',  item:'VPC.10', eq:'EXTINCIÓN TIERRAS',    t:'VALVULA DE ENTRADA',             pos:'A', mx:32.9, my:17.1},
+    {n:38, p:'1457778/9',  item:'VPC.11', eq:'DEPOSITO ESPUMOGENO',  t:'SALIDA TANQUE ESPUMA MIX 2"',    pos:'A', mx:40.8, my:26.1},
   ]},
   { id:'cb', name:'VÁLVULAS CASETA DE BOMBAS CI', valves:[
-    {n:38, p:'1457985/686', item:'VA.01', eq:'BOMBA ELECTRICA', t:'ASPIRACION 10"',              pos:'A', mx:64.41, my:52.15},
-    {n:39, p:'5204893/4',   item:'VA.02', eq:'BOMBA JOCKEY',    t:'ASPIRACION 2"',               pos:'A', mx:76.39, my:51.94},
-    {n:40, p:'1457774/5',   item:'VA.03', eq:'BOMBA DIESEL',    t:'ASPIRACION 10"',              pos:'A', mx:86.28, my:52.04},
-    {n:41, p:'5204880',     item:'VI.01', eq:'BOMBA ELECTRICA', t:'IMPULSION 8"',                pos:'A', mx:64.51, my:62.85},
-    {n:42, p:'1457858',     item:'VI.02', eq:'BOMBA JOCKEY',    t:'IMPULSION 2"',                pos:'A', mx:76.25, my:63.15},
-    {n:43, p:'5204878',     item:'VI.03', eq:'BOMBA DIESEL',    t:'IMPULSION 8"',                pos:'A', mx:86.32, my:63.10},
-    {n:44, p:'5204911',     item:'V/V Recirculacion 01', eq:'TANQUE', t:'Recirculación a tanque', pos:'A', mx:91.35, my:68.63},
-    {n:45, p:'5204858/9',   item:'V/V Recirculacion 02', eq:'TANQUE', t:'Recirculación a tanque', pos:'C', mx:96.04, my:63.05},
-    {n:'', p:'1457980',     item:'VT01', eq:'TANQUE', t:'ASPIRACION GENERAL',    pos:'A', mx:85.57, my:38.97},
-    {n:'', p:'1457979',     item:'VT02', eq:'TANQUE', t:'DRENAJE GENERAL',       pos:'C', mx:75.05, my:36.50},
-    {n:'', p:'1457674/5',   item:'VT03', eq:'TANQUE', t:'DRENAJE FONDO TANQUE',  pos:'C', mx:72.34, my:39.00},
-    {n:46, p:'1457895',     item:'V/V Rociadores',       eq:'CASETA BOMBAS', t:'Rociadores sala bomba 1-1/4"', pos:'A', mx:65.98, my:71.15},
-    {n:47, p:'5204894',     item:'V/V Seguridad',         eq:'', t:'Presostatos',               pos:'A', mx:74.61, my:49.85},
-    {n:48, p:'5204895',     item:'',                      eq:'', t:'Refrigeración diesel p.',   pos:'A', mx:64.41, my:57.00},
-    {n:49, p:'1457859',     item:'',                      eq:'', t:'Calderín hidroneumático 2"',pos:'A', mx:70.00, my:52.00},
-    {n:50, p:'5204888',     item:'V/V General impulsion', eq:'', t:'IMPULSION GENERAL',         pos:'A', mx:62.29, my:68.50},
-    {n:51, p:'1457857',     item:'',                      eq:'', t:'Refrigeración diesel 2"',   pos:'A', mx:70.00, my:59.00},
-    {n:52, p:'1457875',     item:'',                      eq:'', t:'Bypass refrigeración 2"',   pos:'A', mx:70.00, my:53.00},
-    {n:53, p:'1457856',     item:'',                      eq:'', t:'Bypass refrigeración 2"',   pos:'C', mx:70.00, my:54.00},
-    {n:54, p:'1457673',     item:'',                      eq:'', t:'Refrigeracion diesel 2"',   pos:'A', mx:70.00, my:58.00},
-    {n:55, p:'1457759',     item:'',                      eq:'', t:'Manometro principal impulsion', pos:'A', mx:80.25, my:62.15},
-    {n:56, p:'1457878',     item:'',                      eq:'', t:'Salida válv. 2º presostatos 3/4"', pos:'A', mx:80.25, my:63.15},
-    {n:56, p:'1457879',     item:'',                      eq:'', t:'Entrada válv. 2º presostatos 3/4"', pos:'A', mx:80.25, my:64.15},
+    {n:38, p:'1457985/686', item:'VA.01', eq:'BOMBA ELECTRICA', t:'ASPIRACION 10"',              pos:'A', mx:62.5, my:33.8},
+    {n:39, p:'5204893/4',   item:'VA.02', eq:'BOMBA JOCKEY',    t:'ASPIRACION 2"',               pos:'A', mx:73.3, my:33.8},
+    {n:40, p:'1457774/5',   item:'VA.03', eq:'BOMBA DIESEL',    t:'ASPIRACION 10"',              pos:'A', mx:84.4, my:33.8},
+    {n:41, p:'5204880',     item:'VI.01', eq:'BOMBA ELECTRICA', t:'IMPULSION 8"',                pos:'A', mx:62.5, my:44.0},
+    {n:42, p:'1457858',     item:'VI.02', eq:'BOMBA JOCKEY',    t:'IMPULSION 2"',                pos:'A', mx:73.3, my:44.0},
+    {n:43, p:'5204878',     item:'VI.03', eq:'BOMBA DIESEL',    t:'IMPULSION 8"',                pos:'A', mx:84.4, my:44.0},
+    {n:44, p:'5204911',     item:'V/V Recirculacion 01', eq:'TANQUE', t:'Recirculación a tanque', pos:'A', mx:91.5, my:37.8},
+    {n:45, p:'5204858/9',   item:'V/V Recirculacion 02', eq:'TANQUE', t:'Recirculación a tanque', pos:'C', mx:91.5, my:49.0},
+    {n:'', p:'1457980',     item:'VT01', eq:'TANQUE', t:'ASPIRACION GENERAL',    pos:'A', mx:61.7, my:15.2},
+    {n:'', p:'1457979',     item:'VT02', eq:'TANQUE', t:'DRENAJE GENERAL',       pos:'C', mx:73.5, my:15.2},
+    {n:'', p:'1457674/5',   item:'VT03', eq:'TANQUE', t:'DRENAJE FONDO TANQUE',  pos:'C', mx:91.2, my:15.2},
+    {n:46, p:'1457895',     item:'V/V Rociadores',       eq:'CASETA BOMBAS', t:'Rociadores sala bomba 1-1/4"', pos:'A', mx:68.3, my:55.2},
+    {n:47, p:'5204894',     item:'V/V Seguridad',         eq:'', t:'Presostatos',               pos:'A', mx:73.3, my:30.4},
+    {n:48, p:'5204895',     item:'',                      eq:'', t:'Refrigeración diesel p.',   pos:'A', mx:62.5, my:39.5},
+    {n:49, p:'1457859',     item:'',                      eq:'', t:'Calderín hidroneumático 2"',pos:'A', mx:62.5, my:43.0},
+    {n:50, p:'5204888',     item:'V/V General impulsion', eq:'', t:'IMPULSION GENERAL',         pos:'A', mx:62.1, my:55.2},
+    {n:51, p:'1457857',     item:'',                      eq:'', t:'Refrigeración diesel 2"',   pos:'A', mx:84.4, my:39.5},
+    {n:52, p:'1457875',     item:'',                      eq:'', t:'Bypass refrigeración 2"',   pos:'A', mx:84.4, my:43.0},
+    {n:53, p:'1457856',     item:'',                      eq:'', t:'Bypass refrigeración 2"',   pos:'C', mx:84.4, my:46.5},
+    {n:54, p:'1457673',     item:'',                      eq:'', t:'Refrigeracion diesel 2"',   pos:'A', mx:84.4, my:50.0},
+    {n:55, p:'1457759',     item:'',                      eq:'', t:'Manometro principal impulsion', pos:'A', mx:73.3, my:52.0},
+    {n:56, p:'1457878',     item:'',                      eq:'', t:'Salida válv. 2º presostatos 3/4"', pos:'A', mx:77.0, my:52.0},
+    {n:57, p:'1457879',     item:'',                      eq:'', t:'Entrada válv. 2º presostatos 3/4"', pos:'A', mx:80.5, my:52.0},
   ]}
 ];
 
@@ -558,8 +510,7 @@ function makeCard(v,gid,idx,r){
   const card=document.createElement('div');
   card.className=`valve-card ${r.status}`; card.id=`card-${key}`;
   const dN=v.n||'·', dItem=v.item||'—', dEq=v.eq||v.t;
-  const effectivePos=getValvePos(v.item||v.t, v.pos);
-  const posLabel=effectivePos==='A'?'ABIERTA':'CERRADA';
+  const posLabel=v.pos==='A'?'ABIERTA':'CERRADA';
   // Encode item for onclick safely
   const itemEnc=JSON.stringify(v.item||'');
   card.innerHTML=`
@@ -570,15 +521,13 @@ function makeCard(v,gid,idx,r){
         <div class="valve-equipo">${dEq}</div>
         <div class="valve-tipo">${v.t}</div>
       </div>
-      <span class="pos-badge ${effectivePos}">${posLabel}</span>
+      <span class="pos-badge ${v.pos}">${posLabel}</span>
     </div>
     <div class="precinto-row">
       <span class="precinto-lbl">Precinto actual:</span>
-      <span class="precinto-val">${getCurrentPrecinto(v.item||v.t, v.p)||'—'}</span>
+      <span class="precinto-val">${v.p||'—'}</span>
     </div>
-    <button class="map-btn" onclick='openMap(${itemEnc})'>
-      📍 Ver ubicación en plano
-    </button>
+    ${dItem !== '—' ? `<button class="map-btn" onclick='openMap(${itemEnc})'>📍 Ver ubicación en plano</button>` : ''}
     <div class="valve-actions">
       <button class="btn-ok ${r.status==='ok'?'selected':''}" id="ok-${key}" onclick="setStatus('${key}','ok')">✓ CONFORME</button>
       <button class="btn-fail ${r.status==='fail'?'selected':''}" id="fail-${key}" onclick="setStatus('${key}','fail')">✗ INCIDENCIA</button>
@@ -876,31 +825,14 @@ function showSummary(){
 // HISTORY
 // ═══════════════════════════════════════
 function showHistory(){
-  // Merge cloud inspections with local ones
   const keys=Object.keys(localStorage).filter(k=>k.startsWith('masol_report_')).sort().reverse();
-  const cloudInsp = (cloudLoaded && cloudData.inspecciones) ? cloudData.inspecciones : [];
   const c=document.getElementById('history-content');
-  if(!keys.length && !cloudInsp.length){
+  if(!keys.length){
     c.innerHTML=`<div style="text-align:center;padding:60px 0;color:var(--gray-500)">
       <div style="font-size:48px;margin-bottom:12px">📋</div>
       <div style="font-weight:700;font-size:16px">Sin inspecciones guardadas</div></div>`;
   } else {
-    // Cloud inspections (most recent first)
-    const cloudItems = cloudInsp.map(r=>{
-      const f=r.incidencias>0;
-      return `<div class="hist-item ${f?'has-fails':''}">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:10px;background:var(--blue-light);color:var(--blue);padding:2px 7px;border-radius:10px;font-weight:700;">☁️ NUBE</span>
-          <div style="font-weight:700;font-size:15px;color:var(--blue)">${r.mes.toUpperCase()}</div>
-        </div>
-        <div style="font-size:13px;color:var(--gray-500);margin-top:3px">Operador: ${r.operador} · Equipo ${r.equipo} · ${r.fecha}</div>
-        <div style="font-size:13px;margin-top:6px;font-weight:600;color:${f?'var(--red)':'var(--green)'}">
-          ${f?`⚠️ ${r.incidencias} incidencia${r.incidencias>1?'s':''}`:'✓ Sin incidencias'}
-          &nbsp;·&nbsp; ✓ ${r.conformes} conformes
-        </div></div>`;
-    }).join('');
-    // Local inspections
-    c.innerHTML=cloudItems + keys.map(k=>{
+    c.innerHTML=keys.map(k=>{
       const r=JSON.parse(localStorage.getItem(k));
       const f=Object.values(r.results||{}).filter(x=>x.status==='fail').length;
       const md=new Date(r.mes+'-01');
@@ -911,7 +843,6 @@ function showHistory(){
         <div style="font-size:13px;margin-top:6px;font-weight:600;color:${f?'var(--red)':'var(--green)'}">
           ${f?`⚠️ ${f} incidencia${f>1?'s':''}`:'✓ Sin incidencias'}</div></div>`;
     }).join('');
-    c.innerHTML = c.innerHTML; // already set above
   }
   showScreen('screen-history');
 }
@@ -1040,47 +971,53 @@ function doSend(){
 
   setTimeout(()=>{
     try{
-      // 1) Generate and auto-download PDF
+      // 1) Compute stats FIRST (needed for Sheets and email)
+      const md=new Date(S.mes+'-01');
+      const ms=md.toLocaleString('es-ES',{month:'long',year:'numeric'});
+      let ok=0,fails=0,pend=0; const fl=[];
+      const resultsForSheets={};
+      VALVE_GROUPS.forEach(g=>g.valves.forEach((v,i)=>{
+        const k=`${g.id}_${i}`;
+        const r=S.results[k]||{status:'pending'};
+        if(r.status==='ok')ok++;
+        else if(r.status==='fail'){
+          fails++;
+          fl.push(`- ${v.item||'Sin item'} (${v.eq||v.t}): ${r.obs||'Sin obs.'} | Nuevo precinto: ${r.newPrecinto||'No colocado'}`);
+        } else pend++;
+        if(S.results[k]){
+          resultsForSheets[k]={...S.results[k], item:v.item||v.t};
+        }
+      }));
+
+      // 2) Generate and download PDF
       const doc=buildPDF();
       const pdfFilename=`MASOL_PCI_Revision_${S.mes}.pdf`;
       doc.save(pdfFilename);
 
-      // 2) Save to history
-      // Push new precintos and full inspection to Google Sheets
-      const resultsForSheets = {};
+      // 3) Push new precintos to Sheets
       VALVE_GROUPS.forEach(g=>g.valves.forEach((v,i)=>{
-        const k=`${g.id}_${i}`;
-        const r=S.results[k];
-        if(r){
-          resultsForSheets[k]={...r, item:v.item||v.t};
-          if(r.newPrecinto && r.newPrecinto.trim()){
-            pushPrecinto(v.item||v.t, r.newPrecinto, S.operador);
-          }
+        const r=S.results[`${g.id}_${i}`];
+        if(r && r.newPrecinto && r.newPrecinto.trim()){
+          pushPrecinto(v.item||v.t, r.newPrecinto, S.operador);
         }
       }));
+
+      // 4) Push full inspection to Sheets
       pushInspeccion({
         mes:S.mes, operador:S.operador, equipo:S.equipo,
         conformes:ok, incidencias:fails, pendientes:pend,
         resultados:resultsForSheets
       });
+
+      // 5) Save locally and RESET state for next inspection
       localStorage.setItem(`masol_report_${S.mes}_${Date.now()}`,JSON.stringify({
         mes:S.mes,operador:S.operador,equipo:S.equipo,results:S.results,ts:new Date().toISOString()
       }));
       localStorage.removeItem('masol_draft');
+      S.results={};  // ← Reset so next inspection starts clean
 
-      // 3) Build email
-      const md=new Date(S.mes+'-01');
-      const ms=md.toLocaleString('es-ES',{month:'long',year:'numeric'});
-      let ok=0,fails=0,pend=0; const fl=[];
-      VALVE_GROUPS.forEach(g=>g.valves.forEach((v,i)=>{
-        const r=S.results[`${g.id}_${i}`]||{status:'pending'};
-        if(r.status==='ok')ok++;
-        else if(r.status==='fail'){fails++;fl.push(`- ${v.item||'Sin item'} (${v.eq||v.t}): ${r.obs||'Sin obs.'} | Nuevo precinto: ${r.newPrecinto||'No colocado'}`);}
-        else pend++;
-      }));
-
+      // 6) Build email and open with window.open (avoids page navigation on PC)
       st.textContent='ABRIENDO CORREO...';
-
       const subj=encodeURIComponent(`[MASOL PCI] Revisión válvulas contra incendios — ${ms}`);
       const body=encodeURIComponent(
 `Estimado Pedro,
@@ -1092,8 +1029,7 @@ RESUMEN:
 ✗ Incidencias: ${fails}
 ⏳ Pendientes: ${pend}
 
-${fails>0?`INCIDENCIAS DETECTADAS:\n${fl.join('\n')}\n`:'Sin incidencias detectadas.\n'}
-${pend>0?`NOTA: ${pend} válvula(s) pendiente(s) de revisar.\n`:''}
+${fails>0?`INCIDENCIAS DETECTADAS:\n${fl.join('\n')}\n`:'Sin incidencias detectadas.\n'}${pend>0?`NOTA: ${pend} válvula(s) pendiente(s) de revisar.\n`:''}
 Revisado por: ${S.operador} — Equipo ${S.equipo}
 Fecha: ${new Date().toLocaleDateString('es-ES')}
 
@@ -1104,12 +1040,14 @@ ${S.operador}
 MASOL Cartagena Biofuel`);
 
       sl.classList.remove('open');
-
-      // 4) Open mail client — separador ; para Outlook
       const mailto=`mailto:pedro.montero@masolgruppo.com?cc=inmaculada.guzman@masolgruppo.com;francisco.bano@masolgruppo.com&subject=${subj}&body=${body}`;
-      window.location.href=mailto;
+      // Use window.open to avoid navigating away (keeps app alive on PC)
+      const mailWin = window.open(mailto, '_blank');
+      if(!mailWin) window.location.href = mailto; // fallback for mobile
 
       showToast('✓ PDF descargado — Adjúntalo al correo','ok');
+      // Return to home after short delay so user sees confirmation
+      setTimeout(()=>showScreen('screen-home'), 2500);
 
     }catch(e){
       sl.classList.remove('open');
@@ -1142,18 +1080,95 @@ function showToast(msg,type=''){
 
 
 // ═══════════════════════════════════════
+// GOOGLE SHEETS SYNC
+// ═══════════════════════════════════════
+let SHEETS_URL = localStorage.getItem('masol_sheets_url') || '';
+
+let cloudData = { precintos:{}, estados:{}, inspecciones:[] };
+let cloudLoaded = false;
+
+async function loadCloudData(){
+  SHEETS_URL = localStorage.getItem('masol_sheets_url') || '';
+  const cs = document.getElementById('cloud-status');
+  if(!SHEETS_URL){
+    if(cs) cs.innerHTML = '☁️ <span style="color:var(--gray-500)">Sin configurar</span> · <a href="#" onclick="openSheetsConfig();return false;" style="color:var(--blue)">Configurar ahora</a>';
+    return;
+  }
+  if(cs) cs.textContent = '☁️ Sincronizando...';
+  try{
+    const r = await fetch(SHEETS_URL+'?action=getAll&t='+Date.now());
+    const data = await r.json();
+    if(data.ok){
+      cloudData = data;
+      cloudLoaded = true;
+      const overrides = {};
+      Object.entries(data.estados||{}).forEach(([item,d])=>{ overrides[item]=d.posicion; });
+      localStorage.setItem('masol_pos_overrides', JSON.stringify(overrides));
+      if(cs) cs.innerHTML = '☁️ <span style="color:var(--green-dark);font-weight:700;">Sincronizado</span> · '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    } else {
+      if(cs) cs.innerHTML = '☁️ <span style="color:var(--red)">Error al sincronizar</span>';
+    }
+  } catch(e){
+    if(cs) cs.innerHTML = '☁️ <span style="color:var(--gold)">Sin conexión (modo offline)</span>';
+    console.warn('Sheets sync error:', e);
+  }
+}
+
+async function pushPrecinto(item, precinto, operador){
+  SHEETS_URL = localStorage.getItem('masol_sheets_url') || '';
+  if(!SHEETS_URL) return;
+  try{
+    await fetch(SHEETS_URL+'?action=setPrecinto&item='+encodeURIComponent(item)+'&precinto='+encodeURIComponent(precinto)+'&actualizador='+encodeURIComponent(operador));
+    if(!cloudData.precintos) cloudData.precintos={};
+    cloudData.precintos[item]={precinto, fecha:new Date().toLocaleString('es-ES'), actualizador:operador};
+  } catch(e){ console.warn('Error pushPrecinto:', e); }
+}
+
+async function pushEstado(item, posicion){
+  SHEETS_URL = localStorage.getItem('masol_sheets_url') || '';
+  if(!SHEETS_URL) return;
+  try{
+    await fetch(SHEETS_URL+'?action=setEstado&item='+encodeURIComponent(item)+'&posicion='+encodeURIComponent(posicion)+'&actualizador=Admin');
+  } catch(e){ console.warn('Error pushEstado:', e); }
+}
+
+async function pushInspeccion(body){
+  SHEETS_URL = localStorage.getItem('masol_sheets_url') || '';
+  if(!SHEETS_URL) return;
+  try{
+    await fetch(SHEETS_URL+'?action=saveInspeccion', {method:'POST', body:JSON.stringify(body)});
+  } catch(e){ console.warn('Error pushInspeccion:', e); }
+}
+
+function getCurrentPrecinto(item, defaultPrecinto){
+  if(cloudLoaded && cloudData.precintos && cloudData.precintos[item]){
+    return cloudData.precintos[item].precinto;
+  }
+  return defaultPrecinto;
+}
+
+function openSheetsConfig(){
+  SHEETS_URL = localStorage.getItem('masol_sheets_url')||'';
+  const url = prompt('Introduce la URL del Google Apps Script publicado:\n(Apps Script → Implementar → Gestionar implementaciones → copiar URL)', SHEETS_URL);
+  if(url !== null && url.trim()){
+    localStorage.setItem('masol_sheets_url', url.trim());
+    showToast('URL guardada. Recargando...','ok');
+    setTimeout(()=>location.reload(), 1200);
+  }
+}
+
+
+// ═══════════════════════════════════════
 // ADMIN — position state management
 // ═══════════════════════════════════════
 const ADMIN_PIN = '3430000009Masol123';
 
-// Load overrides from localStorage: { 'VH.01': 'C', 'VS.02': 'A', ... }
 function loadPosOverrides(){
   return JSON.parse(localStorage.getItem('masol_pos_overrides')||'{}');
 }
 function savePosOverrides(overrides){
   localStorage.setItem('masol_pos_overrides', JSON.stringify(overrides));
 }
-// Get effective position for a valve (override takes priority)
 function getValvePos(item, defaultPos){
   const overrides = loadPosOverrides();
   return overrides[item] !== undefined ? overrides[item] : defaultPos;
@@ -1179,14 +1194,11 @@ function checkAdminPin(){
     document.getElementById('admin-pin-input').focus();
   }
 }
-// Allow Enter key on pin input
 document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('admin-pin-input').addEventListener('keydown', e=>{
-    if(e.key==='Enter') checkAdminPin();
-  });
+  const pinInput = document.getElementById('admin-pin-input');
+  if(pinInput) pinInput.addEventListener('keydown', e=>{ if(e.key==='Enter') checkAdminPin(); });
 });
 
-// Temporary admin state while editing
 let adminEdits = {};
 
 function openAdminPanel(){
@@ -1203,12 +1215,12 @@ function renderAdminList(){
     hdr.className = 'admin-group-hdr';
     hdr.textContent = g.name;
     list.appendChild(hdr);
-
     const card = document.createElement('div');
-    card.style.cssText = 'background:white;margin-bottom:2px;border-radius:0;';
+    card.style.cssText = 'background:white;margin-bottom:2px;';
     g.valves.forEach(v=>{
-      const currentPos = adminEdits[v.item] !== undefined ? adminEdits[v.item] : v.pos;
+      const currentPos = adminEdits[v.item||v.t] !== undefined ? adminEdits[v.item||v.t] : v.pos;
       const label = v.item || v.t.substring(0,25);
+      const safeKey = label.replace(/[^a-z0-9]/gi,'_');
       const row = document.createElement('div');
       row.className = 'admin-pos-row';
       row.innerHTML = `
@@ -1217,12 +1229,10 @@ function renderAdminList(){
           <div class="admin-pos-type">${v.eq||v.t}</div>
         </div>
         <div class="admin-toggle">
-          <button id="abtn-a-${label.replace(/[^a-z0-9]/gi,'_')}"
-            class="${currentPos==='A'?'active-a':''}"
-            onclick="setAdminPos('${label.replace(/'/g,"\'")}','A')">ABIERTA</button>
-          <button id="abtn-c-${label.replace(/[^a-z0-9]/gi,'_')}"
-            class="${currentPos==='C'?'active-c':''}"
-            onclick="setAdminPos('${label.replace(/'/g,"\'")}','C')">CERRADA</button>
+          <button id="abtn-a-${safeKey}" class="${currentPos==='A'?'active-a':''}"
+            onclick="setAdminPos('${label}','A')">ABIERTA</button>
+          <button id="abtn-c-${safeKey}" class="${currentPos==='C'?'active-c':''}"
+            onclick="setAdminPos('${label}','C')">CERRADA</button>
         </div>`;
       card.appendChild(row);
     });
@@ -1232,107 +1242,28 @@ function renderAdminList(){
 
 function setAdminPos(item, pos){
   adminEdits[item] = pos;
-  // Update button styles
   const key = item.replace(/[^a-z0-9]/gi,'_');
   const btnA = document.getElementById('abtn-a-'+key);
   const btnC = document.getElementById('abtn-c-'+key);
-  if(btnA){ btnA.className = pos==='A'?'active-a':''; }
-  if(btnC){ btnC.className = pos==='C'?'active-c':''; }
+  if(btnA) btnA.className = pos==='A'?'active-a':'';
+  if(btnC) btnC.className = pos==='C'?'active-c':'';
 }
 
 function saveAdminChanges(){
-  // Only save actual changes (where pos differs from original)
   const finalOverrides = {};
   VALVE_GROUPS.forEach(g=>{
     g.valves.forEach(v=>{
-      const edited = adminEdits[v.item||v.t];
+      const key = v.item||v.t;
+      const edited = adminEdits[key];
       if(edited !== undefined && edited !== v.pos){
-        finalOverrides[v.item||v.t] = edited;
+        finalOverrides[key] = edited;
       }
     });
   });
-  // Push each changed estado to Google Sheets
   Object.entries(finalOverrides).forEach(([item,pos])=>{ pushEstado(item, pos); });
   savePosOverrides(finalOverrides);
   showScreen('screen-home');
   showToast('✓ Estados de válvulas actualizados','ok');
-}
-
-
-// ═══════════════════════════════════════
-// GOOGLE SHEETS SYNC
-// ═══════════════════════════════════════
-const SHEETS_URL = localStorage.getItem('masol_sheets_url') || '';
-
-let cloudData = { precintos:{}, estados:{}, inspecciones:[] };
-let cloudLoaded = false;
-
-async function loadCloudData(){
-  const cs = document.getElementById('cloud-status');
-  if(!SHEETS_URL){
-    if(cs) cs.innerHTML = '☁️ <span style="color:var(--gray-500)">Sin configurar</span> · <a href="#" onclick="openSheetsConfig();return false;" style="color:var(--blue)">Configurar ahora</a>';
-    return;
-  }
-  if(cs) cs.textContent = '☁️ Sincronizando...';
-  try{
-    const r = await fetch(SHEETS_URL+'?action=getAll&t='+Date.now());
-    const data = await r.json();
-    if(data.ok){
-      cloudData = data;
-      cloudLoaded = true;
-      // Merge cloud estados into local overrides
-      const overrides = {};
-      Object.entries(data.estados||{}).forEach(([item,d])=>{ overrides[item]=d.posicion; });
-      localStorage.setItem('masol_pos_overrides', JSON.stringify(overrides));
-      if(cs) cs.innerHTML = '☁️ <span style="color:var(--green-dark);font-weight:700;">Sincronizado</span> · '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-    } else {
-      if(cs) cs.innerHTML = '☁️ <span style="color:var(--red)">Error al sincronizar</span>';
-    }
-  } catch(e){
-    if(cs) cs.innerHTML = '☁️ <span style="color:var(--amber)">Sin conexión (modo offline)</span>';
-    console.warn('Sheets sync error:', e);
-  }
-}
-
-async function pushPrecinto(item, precinto, operador){
-  if(!SHEETS_URL) return;
-  try{
-    await fetch(SHEETS_URL+'?action=setPrecinto&item='+encodeURIComponent(item)+'&precinto='+encodeURIComponent(precinto)+'&actualizador='+encodeURIComponent(operador));
-    // Update local cache
-    if(!cloudData.precintos) cloudData.precintos={};
-    cloudData.precintos[item]={precinto, fecha:new Date().toLocaleString('es-ES'), actualizador:operador};
-  } catch(e){ console.warn('Error pushPrecinto:', e); }
-}
-
-async function pushEstado(item, posicion){
-  if(!SHEETS_URL) return;
-  try{
-    await fetch(SHEETS_URL+'?action=setEstado&item='+encodeURIComponent(item)+'&posicion='+encodeURIComponent(posicion)+'&actualizador=Admin');
-  } catch(e){ console.warn('Error pushEstado:', e); }
-}
-
-async function pushInspeccion(body){
-  if(!SHEETS_URL) return;
-  try{
-    await fetch(SHEETS_URL+'?action=saveInspeccion', {method:'POST', body:JSON.stringify(body)});
-  } catch(e){ console.warn('Error pushInspeccion:', e); }
-}
-
-function getCurrentPrecinto(item, defaultPrecinto){
-  if(cloudLoaded && cloudData.precintos && cloudData.precintos[item]){
-    return cloudData.precintos[item].precinto;
-  }
-  return defaultPrecinto;
-}
-
-function openSheetsConfig(){
-  const current = localStorage.getItem('masol_sheets_url')||'';
-  const url = prompt('Introduce la URL del Google Apps Script publicado:\n(Apps Script → Implementar → Gestionar implementaciones → copiar URL)', current);
-  if(url !== null && url.trim()){
-    localStorage.setItem('masol_sheets_url', url.trim());
-    showToast('URL guardada. Recargando...','ok');
-    setTimeout(()=>location.reload(), 1200);
-  }
 }
 
 if('serviceWorker' in navigator){
