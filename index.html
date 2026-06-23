@@ -250,6 +250,8 @@ body{font-family:'Titillium Web',sans-serif;background:var(--gray-50);color:var(
     <button class="btn-secondary" onclick="showHistory()">📋 Historial de inspecciones</button>
     <button class="btn-secondary" style="margin-top:8px" onclick="openMap(null)">🗺️ Ver plano de planta</button>
     <button class="btn-secondary" style="margin-top:8px;border-color:#F5C400;color:#7a6000;" onclick="openAdminLogin()">🔧 Cambiar estado de válvulas</button>
+    <button class="btn-secondary" style="margin-top:8px;border-color:var(--blue);color:var(--blue);font-size:13px;" onclick="openSheetsConfig()">☁️ Configurar sincronización con Google Sheets</button>
+    <div id="cloud-status" style="margin-top:10px;font-size:12px;text-align:center;color:var(--gray-500);padding:6px;">☁️ Iniciando...</div>
   </div>
 </div>
 
@@ -475,6 +477,7 @@ let activeHighlight=null;
 
 document.addEventListener('DOMContentLoaded', () => {
   const now = new Date();
+  loadCloudData();
   document.getElementById('inp-mes').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const d = JSON.parse(localStorage.getItem('masol_draft')||'{}');
   if(d.operador) document.getElementById('inp-operador').value = d.operador;
@@ -571,7 +574,7 @@ function makeCard(v,gid,idx,r){
     </div>
     <div class="precinto-row">
       <span class="precinto-lbl">Precinto actual:</span>
-      <span class="precinto-val">${v.p||'—'}</span>
+      <span class="precinto-val">${getCurrentPrecinto(v.item||v.t, v.p)||'—'}</span>
     </div>
     <button class="map-btn" onclick='openMap(${itemEnc})'>
       📍 Ver ubicación en plano
@@ -873,14 +876,31 @@ function showSummary(){
 // HISTORY
 // ═══════════════════════════════════════
 function showHistory(){
+  // Merge cloud inspections with local ones
   const keys=Object.keys(localStorage).filter(k=>k.startsWith('masol_report_')).sort().reverse();
+  const cloudInsp = (cloudLoaded && cloudData.inspecciones) ? cloudData.inspecciones : [];
   const c=document.getElementById('history-content');
-  if(!keys.length){
+  if(!keys.length && !cloudInsp.length){
     c.innerHTML=`<div style="text-align:center;padding:60px 0;color:var(--gray-500)">
       <div style="font-size:48px;margin-bottom:12px">📋</div>
       <div style="font-weight:700;font-size:16px">Sin inspecciones guardadas</div></div>`;
   } else {
-    c.innerHTML=keys.map(k=>{
+    // Cloud inspections (most recent first)
+    const cloudItems = cloudInsp.map(r=>{
+      const f=r.incidencias>0;
+      return `<div class="hist-item ${f?'has-fails':''}">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:10px;background:var(--blue-light);color:var(--blue);padding:2px 7px;border-radius:10px;font-weight:700;">☁️ NUBE</span>
+          <div style="font-weight:700;font-size:15px;color:var(--blue)">${r.mes.toUpperCase()}</div>
+        </div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:3px">Operador: ${r.operador} · Equipo ${r.equipo} · ${r.fecha}</div>
+        <div style="font-size:13px;margin-top:6px;font-weight:600;color:${f?'var(--red)':'var(--green)'}">
+          ${f?`⚠️ ${r.incidencias} incidencia${r.incidencias>1?'s':''}`:'✓ Sin incidencias'}
+          &nbsp;·&nbsp; ✓ ${r.conformes} conformes
+        </div></div>`;
+    }).join('');
+    // Local inspections
+    c.innerHTML=cloudItems + keys.map(k=>{
       const r=JSON.parse(localStorage.getItem(k));
       const f=Object.values(r.results||{}).filter(x=>x.status==='fail').length;
       const md=new Date(r.mes+'-01');
@@ -891,6 +911,7 @@ function showHistory(){
         <div style="font-size:13px;margin-top:6px;font-weight:600;color:${f?'var(--red)':'var(--green)'}">
           ${f?`⚠️ ${f} incidencia${f>1?'s':''}`:'✓ Sin incidencias'}</div></div>`;
     }).join('');
+    c.innerHTML = c.innerHTML; // already set above
   }
   showScreen('screen-history');
 }
@@ -1025,6 +1046,23 @@ function doSend(){
       doc.save(pdfFilename);
 
       // 2) Save to history
+      // Push new precintos and full inspection to Google Sheets
+      const resultsForSheets = {};
+      VALVE_GROUPS.forEach(g=>g.valves.forEach((v,i)=>{
+        const k=`${g.id}_${i}`;
+        const r=S.results[k];
+        if(r){
+          resultsForSheets[k]={...r, item:v.item||v.t};
+          if(r.newPrecinto && r.newPrecinto.trim()){
+            pushPrecinto(v.item||v.t, r.newPrecinto, S.operador);
+          }
+        }
+      }));
+      pushInspeccion({
+        mes:S.mes, operador:S.operador, equipo:S.equipo,
+        conformes:ok, incidencias:fails, pendientes:pend,
+        resultados:resultsForSheets
+      });
       localStorage.setItem(`masol_report_${S.mes}_${Date.now()}`,JSON.stringify({
         mes:S.mes,operador:S.operador,equipo:S.equipo,results:S.results,ts:new Date().toISOString()
       }));
@@ -1213,9 +1251,88 @@ function saveAdminChanges(){
       }
     });
   });
+  // Push each changed estado to Google Sheets
+  Object.entries(finalOverrides).forEach(([item,pos])=>{ pushEstado(item, pos); });
   savePosOverrides(finalOverrides);
   showScreen('screen-home');
   showToast('✓ Estados de válvulas actualizados','ok');
+}
+
+
+// ═══════════════════════════════════════
+// GOOGLE SHEETS SYNC
+// ═══════════════════════════════════════
+const SHEETS_URL = localStorage.getItem('masol_sheets_url') || '';
+
+let cloudData = { precintos:{}, estados:{}, inspecciones:[] };
+let cloudLoaded = false;
+
+async function loadCloudData(){
+  const cs = document.getElementById('cloud-status');
+  if(!SHEETS_URL){
+    if(cs) cs.innerHTML = '☁️ <span style="color:var(--gray-500)">Sin configurar</span> · <a href="#" onclick="openSheetsConfig();return false;" style="color:var(--blue)">Configurar ahora</a>';
+    return;
+  }
+  if(cs) cs.textContent = '☁️ Sincronizando...';
+  try{
+    const r = await fetch(SHEETS_URL+'?action=getAll&t='+Date.now());
+    const data = await r.json();
+    if(data.ok){
+      cloudData = data;
+      cloudLoaded = true;
+      // Merge cloud estados into local overrides
+      const overrides = {};
+      Object.entries(data.estados||{}).forEach(([item,d])=>{ overrides[item]=d.posicion; });
+      localStorage.setItem('masol_pos_overrides', JSON.stringify(overrides));
+      if(cs) cs.innerHTML = '☁️ <span style="color:var(--green-dark);font-weight:700;">Sincronizado</span> · '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    } else {
+      if(cs) cs.innerHTML = '☁️ <span style="color:var(--red)">Error al sincronizar</span>';
+    }
+  } catch(e){
+    if(cs) cs.innerHTML = '☁️ <span style="color:var(--amber)">Sin conexión (modo offline)</span>';
+    console.warn('Sheets sync error:', e);
+  }
+}
+
+async function pushPrecinto(item, precinto, operador){
+  if(!SHEETS_URL) return;
+  try{
+    await fetch(SHEETS_URL+'?action=setPrecinto&item='+encodeURIComponent(item)+'&precinto='+encodeURIComponent(precinto)+'&actualizador='+encodeURIComponent(operador));
+    // Update local cache
+    if(!cloudData.precintos) cloudData.precintos={};
+    cloudData.precintos[item]={precinto, fecha:new Date().toLocaleString('es-ES'), actualizador:operador};
+  } catch(e){ console.warn('Error pushPrecinto:', e); }
+}
+
+async function pushEstado(item, posicion){
+  if(!SHEETS_URL) return;
+  try{
+    await fetch(SHEETS_URL+'?action=setEstado&item='+encodeURIComponent(item)+'&posicion='+encodeURIComponent(posicion)+'&actualizador=Admin');
+  } catch(e){ console.warn('Error pushEstado:', e); }
+}
+
+async function pushInspeccion(body){
+  if(!SHEETS_URL) return;
+  try{
+    await fetch(SHEETS_URL+'?action=saveInspeccion', {method:'POST', body:JSON.stringify(body)});
+  } catch(e){ console.warn('Error pushInspeccion:', e); }
+}
+
+function getCurrentPrecinto(item, defaultPrecinto){
+  if(cloudLoaded && cloudData.precintos && cloudData.precintos[item]){
+    return cloudData.precintos[item].precinto;
+  }
+  return defaultPrecinto;
+}
+
+function openSheetsConfig(){
+  const current = localStorage.getItem('masol_sheets_url')||'';
+  const url = prompt('Introduce la URL del Google Apps Script publicado:\n(Apps Script → Implementar → Gestionar implementaciones → copiar URL)', current);
+  if(url !== null && url.trim()){
+    localStorage.setItem('masol_sheets_url', url.trim());
+    showToast('URL guardada. Recargando...','ok');
+    setTimeout(()=>location.reload(), 1200);
+  }
 }
 
 if('serviceWorker' in navigator){
