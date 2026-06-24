@@ -1,4 +1,4 @@
-const CACHE = 'masol-pci-v4';
+const CACHE = 'masol-pci-v5';
 const ASSETS = [
   './',
   './index.html',
