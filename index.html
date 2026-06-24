@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1B3480">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MASOL PCI">
+<link rel="manifest" href="manifest.json">
+<title>MASOL PCI — Revisión Válvulas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="map_b64.js"></script>
+<style>
+:root{
+  --green:#00963F;--green-dark:#006B2D;--green-light:#E8F5EE;
+  --blue:#1B3480;--blue-mid:#2A4DB5;--blue-light:#EEF1FA;
+  --teal:#007A6E;--gold:#F5C400;--gold-light:#FEF8D9;
+  --white:#FFFFFF;--gray-50:#F7F8FA;--gray-100:#ECEEF2;
+  --gray-200:#D4D8E2;--gray-500:#7A8299;--gray-700:#3D4561;
+  --gray-900:#1A1F36;--red:#D32F2F;--red-light:#FDECEA;
+  --radius:12px;--radius-sm:8px;
+  --shadow:0 2px 12px rgba(27,52,128,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Titillium Web',sans-serif;background:var(--gray-50);color:var(--gray-900);min-height:100vh;overscroll-behavior:none}
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* HEADER */
+.app-header{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-mid) 60%,var(--teal) 100%);padding:0 16px;display:flex;align-items:center;gap:12px;height:58px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(27,52,128,.25)}
+.logo-wrap{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.logo-svg{width:30px;height:26px}
+.header-brand{font-weight:900;font-size:16px;color:white;letter-spacing:1px;line-height:1}
+.header-brand span{display:block;font-weight:300;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.75);text-transform:uppercase}
+.header-divider{width:1px;height:28px;background:rgba(255,255,255,.25)}
+.header-title{font-weight:700;font-size:15px;color:white;flex:1;line-height:1.2}
+.header-sub{font-size:11px;color:rgba(255,255,255,.65);font-weight:400}
+.btn-back{background:rgba(255,255,255,.15);border:none;color:white;font-size:20px;cursor:pointer;padding:6px 10px;border-radius:var(--radius-sm);flex-shrink:0;line-height:1}
+
+/* HOME */
+.home-hero{background:linear-gradient(160deg,var(--blue) 0%,var(--teal) 50%,var(--green) 100%);padding:28px 20px 32px;text-align:center;position:relative;overflow:hidden}
+.home-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:20px;background:var(--gray-50);border-radius:20px 20px 0 0}
+.hero-icon{font-size:44px;display:block;margin-bottom:10px}
+.hero-title{font-weight:900;font-size:24px;color:white;letter-spacing:1px;text-transform:uppercase}
+.hero-sub{font-size:13px;color:rgba(255,255,255,.8);margin-top:4px;font-weight:300;letter-spacing:2px;text-transform:uppercase}
+.home-content{padding:20px 16px;flex:1}
+.card{background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
+.card-title{font-weight:700;font-size:11px;color:var(--gray-500);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title::before{content:'';display:inline-block;width:3px;height:14px;background:var(--green);border-radius:2px}
+.form-group{margin-bottom:14px}
+.form-label{font-weight:600;font-size:12px;color:var(--gray-700);display:block;margin-bottom:6px;letter-spacing:.3px}
+.form-input,.form-select{width:100%;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);color:var(--gray-900);font-family:'Titillium Web',sans-serif;font-size:16px;font-weight:600;padding:12px 14px;appearance:none;-webkit-appearance:none;outline:none;transition:border-color .2s,box-shadow .2s}
+.form-input:focus,.form-select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(27,52,128,.1);background:white}
+.select-wrap{position:relative}
+.select-wrap::after{content:'▾';position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--gray-500);pointer-events:none;font-size:14px}
+.btn-primary{width:100%;background:linear-gradient(135deg,var(--green) 0%,var(--teal) 100%);color:white;border:none;border-radius:var(--radius);font-family:'Titillium Web',sans-serif;font-weight:700;font-size:18px;letter-spacing:1px;text-transform:uppercase;padding:16px;cursor:pointer;box-shadow:0 4px 14px rgba(0,150,63,.35);transition:opacity .2s,transform .1s;margin-top:4px}
+.btn-primary:active{opacity:.9;transform:scale(.98)}
+.btn-primary:disabled{background:var(--gray-200);color:var(--gray-500);box-shadow:none;cursor:not-allowed}
+.btn-secondary{width:100%;background:white;border:1.5px solid var(--gray-200);color:var(--gray-700);border-radius:var(--radius);font-family:'Titillium Web',sans-serif;font-weight:600;font-size:15px;padding:13px;cursor:pointer;margin-top:10px;transition:border-color .2s}
+.btn-secondary:active{border-color:var(--blue)}
+
+/* PROGRESS */
+.progress-wrap{background:white;padding:10px 16px 12px;border-bottom:1px solid var(--gray-100);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.progress-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.progress-label{font-size:11px;font-weight:600;color:var(--gray-500);letter-spacing:1px;text-transform:uppercase}
+.progress-frac{font-weight:700;font-size:15px;color:var(--blue)}
+.progress-track{height:5px;background:var(--gray-100);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--teal));border-radius:3px;transition:width .4s ease}
+
+/* GROUP + CARDS */
+.group-header{background:var(--blue-light);border-left:3px solid var(--blue);padding:8px 16px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue)}
+.valve-scroll{flex:1;overflow-y:auto;padding:10px 12px 100px}
+.valve-card{background:white;border:1.5px solid var(--gray-200);border-radius:var(--radius);margin-bottom:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);transition:border-color .2s}
+.valve-card.ok{border-color:var(--green);border-left:4px solid var(--green)}
+.valve-card.fail{border-color:var(--red);border-left:4px solid var(--red)}
+.valve-card.pending{border-left:4px solid var(--gray-200)}
+.valve-card-top{padding:11px 14px 8px;display:flex;align-items:flex-start;gap:10px}
+.valve-num-badge{background:var(--blue);color:white;font-weight:700;font-size:12px;padding:3px 7px;border-radius:5px;flex-shrink:0;min-width:30px;text-align:center;margin-top:1px}
+.valve-info{flex:1;min-width:0}
+.valve-item-label{font-weight:700;font-size:17px;color:var(--blue);letter-spacing:.3px}
+.valve-equipo{font-size:13px;color:var(--gray-700);margin-top:1px;font-weight:600}
+.valve-tipo{font-size:11px;color:var(--gray-500);margin-top:1px}
+.pos-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.5px;flex-shrink:0;margin-top:2px}
+.pos-badge.A{background:var(--green-light);color:var(--green-dark);border:1px solid #b2dfcc}
+.pos-badge.C{background:var(--red-light);color:var(--red);border:1px solid #f5c6c6}
+.precinto-row{padding:0 14px 8px;display:flex;align-items:center;gap:8px}
+.precinto-lbl{font-size:11px;color:var(--gray-500);font-weight:600}
+.precinto-val{font-weight:700;font-size:14px;color:var(--blue);background:var(--blue-light);padding:3px 10px;border-radius:5px;letter-spacing:1px}
+.map-btn{margin:0 14px 10px;background:var(--gold-light);border:1px solid var(--gold);color:var(--gray-700);border-radius:6px;font-family:'Titillium Web',sans-serif;font-size:12px;font-weight:600;padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:5px;width:calc(100% - 28px)}
+.map-btn:active{background:var(--gold)}
+.valve-actions{padding:0 14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-ok,.btn-fail{border:2px solid;border-radius:var(--radius-sm);font-family:'Titillium Web',sans-serif;font-weight:700;font-size:15px;padding:13px 8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;background:white}
+.btn-ok{border-color:var(--green);color:var(--green)}
+.btn-fail{border-color:var(--red);color:var(--red)}
+.btn-ok.selected,.btn-ok:active{background:var(--green);color:white}
+.btn-fail.selected,.btn-fail:active{background:var(--red);color:white}
+.fail-section{display:none;flex-direction:column;gap:8px;background:var(--red-light);border-radius:var(--radius-sm);padding:10px 12px 12px;margin:0 14px 12px}
+.fail-section.visible{display:flex}
+.fail-section label{font-size:11px;font-weight:700;color:var(--red);letter-spacing:.5px;text-transform:uppercase}
+.new-seal-input{background:white;border:1.5px solid #f5a0a0;border-radius:var(--radius-sm);color:var(--gray-900);font-family:'Titillium Web',sans-serif;font-weight:700;font-size:18px;padding:10px 12px;outline:none;width:100%;letter-spacing:1px}
+.new-seal-input:focus{border-color:var(--red)}
+.obs-input{background:white;border:1.5px solid #f5a0a0;border-radius:var(--radius-sm);color:var(--gray-900);font-family:'Titillium Web',sans-serif;font-size:13px;padding:8px 10px;outline:none;width:100%;resize:none;height:56px}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--gray-100);padding:10px 12px;display:flex;gap:10px;z-index:200;box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+.bottom-bar .btn-primary{margin-top:0;font-size:16px;padding:14px}
+.bottom-bar .btn-close{background:var(--gray-50);border:1.5px solid var(--gray-200);color:var(--gray-500);border-radius:var(--radius);font-size:18px;padding:14px 16px;cursor:pointer;flex-shrink:0}
+
+/* MAP MODAL */
+.map-modal{display:none;position:fixed;inset:0;background:rgba(27,52,128,.9);z-index:800;flex-direction:column}
+.map-modal.open{display:flex}
+.map-modal-header{background:linear-gradient(135deg,var(--blue),var(--teal));padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.map-modal-title{font-weight:700;font-size:16px;color:white}
+.map-modal-sub{font-size:12px;color:rgba(255,255,255,.7);margin-top:2px}
+.map-close{background:rgba(255,255,255,.2);border:none;color:white;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.map-viewport{flex:1;overflow:hidden;position:relative;background:#1a1f36;touch-action:none}
+.map-container{position:absolute;top:0;left:0;transform-origin:0 0;cursor:grab;user-select:none;overflow:hidden}
+.map-container:active{cursor:grabbing}
+.map-img{display:block;max-width:none;pointer-events:none}
+/* Valve hotspot pins on map */
+.valve-pin{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:10;touch-action:none}
+.valve-pin-dot{width:20px;height:20px;border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:700;color:white;box-shadow:0 2px 6px rgba(0,0,0,.5);transition:all .2s;line-height:1;text-align:center}
+.valve-pin.vh .valve-pin-dot{background:var(--blue)}
+.valve-pin.vs .valve-pin-dot{background:var(--green)}
+.valve-pin.vpc .valve-pin-dot{background:#7030a0}
+.valve-pin.cb .valve-pin-dot{background:#B8920A}
+.valve-pin.highlighted .valve-pin-dot{width:34px;height:34px;font-size:9px;background:var(--red)!important;border-color:var(--gold);box-shadow:0 0 0 6px rgba(245,196,0,.4),0 2px 12px rgba(0,0,0,.6);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(245,196,0,.4),0 2px 12px rgba(0,0,0,.6)}50%{box-shadow:0 0 0 10px rgba(245,196,0,.15),0 2px 16px rgba(0,0,0,.7)}}
+.valve-pin-label{position:absolute;top:100%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:white;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;margin-top:2px;pointer-events:none}
+.map-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);color:white;font-size:11px;padding:6px 14px;border-radius:20px;white-space:nowrap;pointer-events:none}
+.map-info-bar{background:white;padding:10px 16px;flex-shrink:0;border-top:1px solid var(--gray-100);min-height:52px;display:flex;align-items:center;gap:10px}
+.map-info-text{flex:1;font-size:13px;color:var(--gray-500)}
+.map-info-text strong{display:block;font-size:14px;color:var(--blue);font-weight:700}
+.map-zoom-btns{display:flex;gap:6px;flex-shrink:0}
+.zoom-btn{background:var(--blue-light);border:1px solid var(--blue);color:var(--blue);border-radius:8px;font-size:18px;font-weight:700;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+/* CONFIRM MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(27,52,128,.7);z-index:600;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:white;border-radius:20px 20px 0 0;width:100%;max-width:600px;padding:20px 18px 32px}
+.modal-handle{width:36px;height:4px;background:var(--gray-200);border-radius:2px;margin:0 auto 18px}
+.modal-title{font-weight:700;font-size:18px;color:var(--blue);margin-bottom:10px}
+.modal-text{font-size:13px;color:var(--gray-700);line-height:1.6;margin-bottom:18px;white-space:pre-line}
+
+/* SUMMARY */
+.summary-content{padding:16px;flex:1;overflow-y:auto;padding-bottom:100px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
+.stat-card{background:white;border-radius:var(--radius);padding:14px 10px;text-align:center;box-shadow:var(--shadow);border-top:3px solid}
+.stat-card.green{border-top-color:var(--green)}
+.stat-card.red{border-top-color:var(--red)}
+.stat-card.gold{border-top-color:var(--gold)}
+.stat-num{font-weight:900;font-size:34px;line-height:1}
+.stat-card.green .stat-num{color:var(--green)}
+.stat-card.red .stat-num{color:var(--red)}
+.stat-card.gold .stat-num{color:#B8920A}
+.stat-lbl{font-size:10px;color:var(--gray-500);font-weight:700;letter-spacing:1px;margin-top:3px;text-transform:uppercase}
+.section-title{font-weight:700;font-size:11px;color:var(--gray-500);text-transform:uppercase;letter-spacing:1.5px;margin:16px 0 10px;display:flex;align-items:center;gap:6px}
+.section-title::before{content:'';width:3px;height:13px;background:var(--green);border-radius:2px;display:inline-block}
+.section-title.red::before{background:var(--red)}
+.sum-item{background:white;border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.sum-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.sum-dot.ok{background:var(--green)}
+.sum-dot.fail{background:var(--red)}
+.sum-info{flex:1}
+.sum-item-name{font-weight:700;font-size:14px;color:var(--blue)}
+.sum-item-detail{font-size:11px;color:var(--gray-500);margin-top:2px}
+.sum-item-detail.warn{color:var(--red);font-weight:600}
+.sum-precinto{font-weight:700;font-size:12px;color:var(--blue);background:var(--blue-light);padding:2px 8px;border-radius:4px;flex-shrink:0}
+.alert-banner{background:var(--gold-light);border:1px solid var(--gold);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:#7a6000;font-weight:600;margin-bottom:16px;display:none}
+.alert-banner.visible{display:block}
+.hist-item{background:white;border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);border-left:4px solid var(--blue)}
+.hist-item.has-fails{border-left-color:var(--red)}
+.sending-overlay{display:none;position:fixed;inset:0;background:rgba(27,52,128,.92);z-index:1000;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.sending-overlay.open{display:flex}
+.spinner{width:44px;height:44px;border:3px solid rgba(255,255,255,.2);border-top-color:white;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sending-text{font-weight:600;font-size:16px;color:rgba(255,255,255,.8);letter-spacing:1px}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--gray-900);color:white;font-family:'Titillium Web',sans-serif;font-weight:600;font-size:14px;padding:10px 18px;border-radius:100px;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;box-shadow:0 8px 32px rgba(27,52,128,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--green-dark)}
+.toast.err{background:var(--red)}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- ═══ HOME ═══ -->
+<div id="screen-home" class="screen active">
+  <div class="app-header">
+    <div class="logo-wrap">
+      <svg class="logo-svg" viewBox="0 0 40 36" fill="none">
+        <polygon points="0,36 12,16 24,36" fill="white" opacity=".9"/>
+        <polygon points="8,36 20,12 32,36" fill="white" opacity=".7"/>
+        <polygon points="16,36 28,8 40,36" fill="white" opacity=".9"/>
+        <rect x="0" y="29" width="40" height="4" fill="white" opacity=".6"/>
+      </svg>
+      <div class="header-brand">MASOL<span>Cartagena Biofuel</span></div>
+    </div>
+    <div class="header-divider"></div>
+    <div class="header-title">Sistema PCI<div class="header-sub">Contra Incendios</div></div>
+  </div>
+  <div class="home-hero">
+    <span class="hero-icon">🔥</span>
+    <div class="hero-title">Revisión de Válvulas</div>
+    <div class="hero-sub">Inspección Mensual · PCI</div>
+  </div>
+  <div class="home-content">
+    <div class="card">
+      <div class="card-title">Datos de la inspección</div>
+      <div class="form-group">
+        <label class="form-label">Operador</label>
+        <input id="inp-operador" class="form-input" type="text" placeholder="Nombre y apellidos" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Equipo</label>
+        <div class="select-wrap">
+          <select id="inp-equipo" class="form-select">
+            <option value="">Seleccionar equipo...</option>
+            <option value="1">Equipo 1</option>
+            <option value="2">Equipo 2</option>
+            <option value="3">Equipo 3</option>
+            <option value="4">Equipo 4</option>
+            <option value="5">Equipo 5</option>
+            <option value="Otros">Otros</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mes de inspección</label>
+        <input id="inp-mes" class="form-input" type="month">
+      </div>
+      <button class="btn-primary" onclick="startInspection()">INICIAR INSPECCIÓN →</button>
+    </div>
+    <button class="btn-secondary" onclick="showHistory()">📋 Historial de inspecciones</button>
+    <button class="btn-secondary" style="margin-top:8px" onclick="openMap(null)">🗺️ Ver plano de planta</button>
+    <button class="btn-secondary" style="margin-top:8px;border-color:#F5C400;color:#7a6000;" onclick="openAdminLogin()">🔧 Cambiar estado de válvulas</button>
+
+    <div id="cloud-status" style="margin-top:10px;font-size:12px;text-align:center;color:var(--gray-500);padding:6px;">☁️ Iniciando...</div>
+  </div>
+</div>
+
+<!-- ═══ INSPECTION ═══ -->
+<div id="screen-inspection" class="screen">
+  <div class="app-header">
+    <button class="btn-back" onclick="confirmBack()">‹</button>
+    <div style="flex:1">
+      <div class="header-title" id="insp-title">Revisión</div>
+      <div class="header-sub" id="insp-sub"></div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-size:13px;font-weight:700;color:white" id="insp-date"></div>
+      <div style="font-size:10px;color:rgba(255,255,255,.65)">Equipo <span id="insp-equipo"></span></div>
+    </div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span class="progress-label">Progreso</span>
+      <span class="progress-frac"><span id="prog-done">0</span> / <span id="prog-total">0</span></span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+  <div class="valve-scroll" id="valve-scroll"></div>
+  <div class="bottom-bar">
+    <button class="btn-close" onclick="confirmBack()">✕</button>
+    <button class="btn-primary" id="btn-finish" onclick="showSummary()">VER RESUMEN →</button>
+  </div>
+</div>
+
+<!-- ═══ SUMMARY ═══ -->
+<div id="screen-summary" class="screen">
+  <div class="app-header">
+    <button class="btn-back" onclick="showScreen('screen-inspection')">‹</button>
+    <div><div class="header-title">Resumen</div><div class="header-sub">Listo para enviar</div></div>
+  </div>
+  <div class="summary-content">
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="alert-banner" id="alert-pending"></div>
+    <div class="section-title red">Válvulas con incidencia</div>
+    <div id="sum-fails"></div>
+    <div class="section-title">Válvulas conformes</div>
+    <div id="sum-ok"></div>
+    <div style="margin-top:20px">
+      <button class="btn-primary" onclick="confirmSend()">📧 GENERAR Y ENVIAR INFORME</button>
+      <button class="btn-secondary" onclick="downloadPDF()">⬇️ Descargar PDF</button>
+      <button class="btn-secondary" style="margin-top:8px" onclick="showScreen('screen-inspection')">← Volver a editar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HISTORY ═══ -->
+<div id="screen-history" class="screen">
+  <div class="app-header">
+    <button class="btn-back" onclick="showScreen('screen-home')">‹</button>
+    <div><div class="header-title">Historial</div></div>
+  </div>
+  <div style="padding:16px;flex:1" id="history-content"></div>
+</div>
+
+<!-- ═══ MAP MODAL ═══ -->
+<div class="map-modal" id="map-modal">
+  <div class="map-modal-header">
+    <div>
+      <div class="map-modal-title">🗺️ Plano Sistema PCI</div>
+      <div class="map-modal-sub" id="map-modal-sub">Usa dos dedos para hacer zoom · Arrastra para mover</div>
+    </div>
+    <button class="map-close" onclick="closeMap()">✕</button>
+  </div>
+  <div class="map-viewport" id="map-viewport">
+    <div class="map-container" id="map-container">
+      <img class="map-img" id="map-img" src="" alt="Plano PCI" draggable="false">
+      <!-- Valve pins injected by JS -->
+      <div id="valve-pins"></div>
+    </div>
+    <div class="map-hint" id="map-hint">Pellizca para hacer zoom • Arrastra para mover</div>
+  </div>
+  <div class="map-info-bar">
+    <div class="map-info-text" id="map-info-text">Toca una válvula en el plano para ver su información</div>
+    <div class="map-zoom-btns">
+      <button class="zoom-btn" onclick="mapZoom(0.6)">−</button>
+      <button class="zoom-btn" onclick="mapZoom(1.4)">+</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ ADMIN LOGIN ═══ -->
+<div class="modal-overlay" id="modal-admin-login">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔧 Acceso administrador</div>
+    <div class="modal-text">Introduce la clave para modificar el estado de las válvulas.</div>
+    <input id="admin-pin-input" class="admin-pin-input" type="password" placeholder="••••••••••••••••••" autocomplete="off">
+    <div id="admin-pin-error" style="color:var(--red);font-size:12px;margin-top:8px;display:none;">Clave incorrecta. Inténtalo de nuevo.</div>
+    <button class="btn-primary" style="margin-top:16px;margin-bottom:10px" onclick="checkAdminPin()">ACCEDER</button>
+    <button class="btn-secondary" onclick="closeAdminLogin()">Cancelar</button>
+  </div>
+</div>
+
+<!-- ═══ ADMIN PANEL ═══ -->
+<div id="screen-admin" class="screen">
+  <div class="app-header">
+    <button class="btn-back" onclick="showScreen('screen-home')">‹</button>
+    <div style="flex:1">
+      <div class="header-title">Estado de Válvulas</div>
+      <div class="header-sub">Modo administrador</div>
+    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,.7);background:rgba(245,196,0,.2);padding:4px 10px;border-radius:6px;border:1px solid rgba(245,196,0,.4);">ADMIN</div>
+  </div>
+  <div style="background:var(--gold-light);border-bottom:1px solid var(--gold);padding:10px 16px;font-size:12px;color:#7a6000;font-weight:600;flex-shrink:0;">
+    ⚠️ Los cambios se guardan automáticamente y afectan a todas las inspecciones futuras.
+  </div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:80px" id="admin-valve-list"></div>
+  <div style="position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--gray-100);padding:12px 16px;box-shadow:0 -4px 16px rgba(0,0,0,.08)">
+    <button class="btn-primary" onclick="saveAdminChanges()">✓ GUARDAR CAMBIOS Y SALIR</button>
+  </div>
+</div>
+
+<!-- ═══ CONFIRM MODAL ═══ -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">¿Confirmar?</div>
+    <div class="modal-text" id="modal-text"></div>
+    <button class="btn-primary" id="modal-ok" style="margin-bottom:10px">Confirmar</button>
+    <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- ═══ SENDING ═══ -->
+<div class="sending-overlay" id="sending-overlay">
+  <div class="spinner"></div>
+  <div class="sending-text" id="sending-text">GENERANDO INFORME...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// VALVE DATA — coordinates calibrated by user via calibrador.html
+// ═══════════════════════════════════════
+const VALVE_GROUPS = [
+  { id:'vh', name:'VÁLVULAS CORTE HIDRANTE', valves:[
+    {n:1,  p:'1457777',   item:'VH.01', eq:'HIDRANTE nº 1',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:44.97, my:48.02},
+    {n:2,  p:'1457776',   item:'VH.02', eq:'HIDRANTE nº 2',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:55.79, my:34.71},
+    {n:3,  p:'1457952',   item:'VH.03', eq:'HIDRANTE nº 3',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:33.33, my:30.18},
+    {n:4,  p:'1457769',   item:'VH.04', eq:'HIDRANTE nº 4',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:17.96, my:30.90},
+    {n:5,  p:'5204896',   item:'VH.05', eq:'HIDRANTE nº 5',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:12.52, my:48.32},
+    {n:6,  p:'5204883',   item:'VH.06', eq:'HIDRANTE nº 6',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:4.31,  my:65.99},
+    {n:7,  p:'5204854',   item:'VH.07', eq:'HIDRANTE nº 7',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:21.61, my:70.25},
+    {n:8,  p:'5204862',   item:'VH.08', eq:'HIDRANTE nº 8',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:37.86, my:70.25},
+    {n:9,  p:'5204898',   item:'VH.09', eq:'HIDRANTE nº 9',           t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:32.82, my:49.43},
+    {n:10, p:'1457665',   item:'VH.10', eq:'HIDRANTE nº 10',          t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:30.15, my:53.06},
+    {n:11, p:'5204823/4', item:'VH.11', eq:'HIDRANTE nº 11 (PUERTO)', t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'C', mx:50.99, my:13.33, obs:'Pendiente'},
+  ]},
+  { id:'vs', name:'VÁLVULAS SECCIONAMIENTO RED AGUA CI', valves:[
+    {n:13, p:'1457973',   item:'VS.01', eq:'RED AGUA CI',    t:'SERVICIO VH.02 (CADENA)',        pos:'A', mx:46.03, my:37.57},
+    {n:14, p:'5204882',   item:'VS.02', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:33.86, my:40.12},
+    {n:15, p:'1457951',   item:'VS.03', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 4"', pos:'A', mx:37.16, my:28.91},
+    {n:16, p:'5204827',   item:'VS.04', eq:'BIES DE REFINO', t:'VALVULA BOLA 2"',                pos:'A', mx:38.05, my:38.85},
+    {n:17, p:'1457688',   item:'VS.05', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:47.40, my:52.76},
+    {n:18, p:'1457652',   item:'VS.06', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:38.29, my:51.59},
+    {n:19, p:'5204832',   item:'VS.09', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:6.68,  my:53.50},
+    {n:20, p:'1457981',   item:'VS.08', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:7.94,  my:51.87},
+    {n:21, p:'5204868',   item:'VS.07', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:10.48, my:51.87},
+    {n:22, p:'5204869',   item:'VS.10', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:7.29,  my:63.19},
+    {n:23, p:'5204870',   item:'VS.11', eq:'RED AGUA CI',    t:'COMPUERTA USILLO FIJO 6"',       pos:'A', mx:7.29,  my:65.69},
+    {n:24, p:'5204861',   item:'VS.12', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:47.75, my:68.01},
+    {n:25, p:'5204853',   item:'VS.13', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE 6"', pos:'A', mx:47.81, my:65.25},
+    {n:26, p:'1457956',   item:'VS.14', eq:'RED AGUA CI',    t:'BY-PASS ESPUMOGENO',             pos:'C', mx:45.69, my:42.26},
+    {n:'', p:'',          item:'VS.15', eq:'RED AGUA CI',    t:'COMPUERTA USILLO ASCENDENTE',    pos:'A', mx:44.73, my:39.71},
+  ]},
+  { id:'vpc', name:'VÁLVULAS CORTE PUESTOS DE CONTROL', valves:[
+    {n:28, p:'5204914/5',  item:'VPC.01', eq:'PUESTO CONTROL',       t:'SALIDA TQ ESPUMOGENO HACIA BIO', pos:'A', mx:47.81, my:39.05},
+    {n:29, p:'5204910',    item:'VPC.02', eq:'PUESTO CONTROL',       t:'COMPUERTA USILLO ASCENDENTE 2"', pos:'A', mx:16.30, my:52.89},
+    {n:30, p:'5204873/4',  item:'VPC.03', eq:'PUESTO CONTROL',       t:'VALVULA BOLA 2"',                pos:'A', mx:14.11, my:52.84},
+    {n:31, p:'1457785',    item:'VPC.04', eq:'ACORTINADOR DCS',      t:'DISPARO MANUAL',                 pos:'A', mx:46.64, my:49.90},
+    {n:32, p:'5204855/6',  item:'VPC.05', eq:'ACORTINADOR DCS',      t:'VALVULA DE CORTE',               pos:'C', mx:46.95, my:46.03},
+    {n:33, p:'1457957/8',  item:'VPC.06', eq:'DEPOSITO ESPUMOGENO',  t:'ALIMENTACION TQ ESPUMOGENO',     pos:'A', mx:47.81, my:42.36},
+    {n:34, p:'1457873',    item:'VPC.07', eq:'ACORTINADOR TQ O2',    t:'VALVULA DE ENTRADA',             pos:'A', mx:14.98, my:30.95},
+    {n:35, p:'5204886/7',  item:'VPC.08', eq:'EXTINCIÓN RP',         t:'VALVULA DE ENTRADA',             pos:'A', mx:13.41, my:37.62},
+    {n:36, p:'1457782/3',  item:'VPC.09', eq:'ACORTINADOR 07V1A/2A', t:'VALVULA DE ENTRADA 4"',          pos:'A', mx:18.80, my:52.84},
+    {n:37, p:'1457991/2',  item:'VPC.10', eq:'EXTINCIÓN TIERRAS',    t:'VALVULA DE ENTRADA',             pos:'A', mx:39.22, my:32.12},
+    {n:38, p:'1457778/9',  item:'VPC.11', eq:'DEPOSITO ESPUMOGENO',  t:'SALIDA TANQUE ESPUMA MIX 2"',    pos:'A', mx:49.42, my:40.68},
+  ]},
+  { id:'cb', name:'VÁLVULAS CASETA DE BOMBAS CI', valves:[
+    {n:38, p:'1457985/686', item:'VA.01', eq:'BOMBA ELECTRICA', t:'ASPIRACION 10"',              pos:'A', mx:64.41, my:52.15},
+    {n:39, p:'5204893/4',   item:'VA.02', eq:'BOMBA JOCKEY',    t:'ASPIRACION 2"',               pos:'A', mx:76.39, my:51.94},
+    {n:40, p:'1457774/5',   item:'VA.03', eq:'BOMBA DIESEL',    t:'ASPIRACION 10"',              pos:'A', mx:86.28, my:52.04},
+    {n:41, p:'5204880',     item:'VI.01', eq:'BOMBA ELECTRICA', t:'IMPULSION 8"',                pos:'A', mx:64.51, my:62.85},
+    {n:42, p:'1457858',     item:'VI.02', eq:'BOMBA JOCKEY',    t:'IMPULSION 2"',                pos:'A', mx:76.25, my:63.15},
+    {n:43, p:'5204878',     item:'VI.03', eq:'BOMBA DIESEL',    t:'IMPULSION 8"',                pos:'A', mx:86.32, my:63.10},
+    {n:44, p:'5204911',     item:'V/V Recirculacion 01', eq:'TANQUE', t:'Recirculación a tanque', pos:'A', mx:91.35, my:68.63},
+    {n:45, p:'5204858/9',   item:'V/V Recirculacion 02', eq:'TANQUE', t:'Recirculación a tanque', pos:'C', mx:96.04, my:63.05},
+    {n:'', p:'1457980',     item:'VT01', eq:'TANQUE', t:'ASPIRACION GENERAL',    pos:'A', mx:85.57, my:38.97},
+    {n:'', p:'1457979',     item:'VT02', eq:'TANQUE', t:'DRENAJE GENERAL',       pos:'C', mx:75.05, my:36.50},
+    {n:'', p:'1457674/5',   item:'VT03', eq:'TANQUE', t:'DRENAJE FONDO TANQUE',  pos:'C', mx:72.34, my:39.00},
+    {n:46, p:'1457895',     item:'V/V Rociadores',       eq:'CASETA BOMBAS', t:'Rociadores sala bomba 1-1/4"', pos:'A', mx:65.98, my:71.15},
+    {n:47, p:'5204894',     item:'V/V Seguridad',         eq:'', t:'Presostatos',               pos:'A', mx:74.61, my:49.85},
+    {n:48, p:'5204895',     item:'',                      eq:'', t:'Refrigeración diesel p.',   pos:'A', mx:64.41, my:57.00},
+    {n:49, p:'1457859',     item:'',                      eq:'', t:'Calderín hidroneumático 2"',pos:'A', mx:70.00, my:52.00},
+    {n:50, p:'5204888',     item:'V/V General impulsion', eq:'', t:'IMPULSION GENERAL',         pos:'A', mx:62.29, my:68.50},
+    {n:51, p:'1457857',     item:'',                      eq:'', t:'Refrigeración diesel 2"',   pos:'A', mx:70.00, my:59.00},
+    {n:52, p:'1457875',     item:'',                      eq:'', t:'Bypass refrigeración 2"',   pos:'A', mx:70.00, my:53.00},
+    {n:53, p:'1457856',     item:'',                      eq:'', t:'Bypass refrigeración 2"',   pos:'C', mx:70.00, my:54.00},
+    {n:54, p:'1457673',     item:'',                      eq:'', t:'Refrigeracion diesel 2"',   pos:'A', mx:70.00, my:58.00},
+    {n:55, p:'1457759',     item:'',                      eq:'', t:'Manometro principal impulsion', pos:'A', mx:80.25, my:62.15},
+    {n:56, p:'1457878',     item:'',                      eq:'', t:'Salida válv. 2º presostatos 3/4"', pos:'A', mx:80.25, my:63.15},
+    {n:56, p:'1457879',     item:'',                      eq:'', t:'Entrada válv. 2º presostatos 3/4"', pos:'A', mx:80.25, my:64.15},
+  ]}
+];
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let S = { operador:'', equipo:'', mes:'', results:{} };
+
+// Map pan/zoom state
+let mapScale=1, mapX=0, mapY=0;
+let mapImgW=0, mapImgH=0;
+let activeHighlight=null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const now = new Date();
+  loadCloudData();
+  document.getElementById('inp-mes').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const d = JSON.parse(localStorage.getItem('masol_draft')||'{}');
+  if(d.operador) document.getElementById('inp-operador').value = d.operador;
+  if(d.equipo)   document.getElementById('inp-equipo').value   = d.equipo;
+  if(d.mes)      document.getElementById('inp-mes').value      = d.mes;
+
+  // Load map image
+  const img = document.getElementById('map-img');
+  img.src = typeof MAP_IMAGE_B64 !== 'undefined' ? MAP_IMAGE_B64 : '';
+  img.onload = () => {
+    mapImgW = img.naturalWidth;
+    mapImgH = img.naturalHeight;
+    renderPins();
+  };
+  setupMapGestures();
+});
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function confirmBack(){
+  showModal('¿Salir de la inspección?','Los datos se guardan como borrador automáticamente.',()=>{saveDraft();showScreen('screen-home');});
+}
+function saveDraft(){
+  localStorage.setItem('masol_draft',JSON.stringify({operador:S.operador,equipo:S.equipo,mes:S.mes,results:S.results}));
+}
+
+// ═══════════════════════════════════════
+// START
+// ═══════════════════════════════════════
+function startInspection(){
+  const op=document.getElementById('inp-operador').value.trim();
+  const eq=document.getElementById('inp-equipo').value;
+  const mes=document.getElementById('inp-mes').value;
+  if(!op){showToast('⚠️ Introduce el nombre del operador','err');return;}
+  if(!eq){showToast('⚠️ Selecciona el equipo','err');return;}
+  if(!mes){showToast('⚠️ Selecciona el mes','err');return;}
+  S.operador=op; S.equipo=eq; S.mes=mes;
+  const d=JSON.parse(localStorage.getItem('masol_draft')||'{}');
+  S.results=(d.operador===op&&d.mes===mes)?(d.results||{}):{};
+  // Reload cloud data first to get latest precintos, then render
+  loadCloudData().then(()=>{
+    renderInspection();
+    showScreen('screen-inspection');
+  });
+}
+
+// ═══════════════════════════════════════
+// INSPECTION RENDER
+// ═══════════════════════════════════════
+function renderInspection(){
+  const md=new Date(S.mes+'-01');
+  const ms=md.toLocaleString('es-ES',{month:'long',year:'numeric'});
+  document.getElementById('insp-title').textContent=`Revisión ${ms}`;
+  document.getElementById('insp-sub').textContent=S.operador;
+  document.getElementById('insp-equipo').textContent=S.equipo;
+  document.getElementById('insp-date').textContent=new Date().toLocaleDateString('es-ES');
+  const c=document.getElementById('valve-scroll');
+  c.innerHTML='';
+  VALVE_GROUPS.forEach(g=>{
+    const gd=document.createElement('div');
+    const gh=document.createElement('div');
+    gh.className='group-header'; gh.textContent=g.name; gd.appendChild(gh);
+    g.valves.forEach((v,i)=>{
+      const key=`${g.id}_${i}`;
+      const r=S.results[key]||{status:'pending',newPrecinto:'',obs:''};
+      gd.appendChild(makeCard(v,g.id,i,r));
+    });
+    c.appendChild(gd);
+  });
+  updateProgress();
+}
+
+function makeCard(v,gid,idx,r){
+  const key=`${gid}_${idx}`;
+  const card=document.createElement('div');
+  card.className=`valve-card ${r.status}`; card.id=`card-${key}`;
+  const dN=v.n||'·', dItem=v.item||'—', dEq=v.eq||v.t;
+  const posLabel=v.pos==='A'?'ABIERTA':'CERRADA';
+  // Encode item for onclick safely
+  const itemEnc=JSON.stringify(v.item||'');
+  card.innerHTML=`
+    <div class="valve-card-top">
+      <div class="valve-num-badge">${dN}</div>
+      <div class="valve-info">
+        <div class="valve-item-label">${dItem}</div>
+        <div class="valve-equipo">${dEq}</div>
+        <div class="valve-tipo">${v.t}</div>
+      </div>
+      <span class="pos-badge ${v.pos}">${posLabel}</span>
+    </div>
+    <div class="precinto-row">
+      <span class="precinto-lbl">Precinto actual:</span>
+      <span class="precinto-val">${getCurrentPrecinto(v.item||v.t, v.p)||'—'}</span>
+    </div>
+    ${dItem !== '—' ? `<button class="map-btn" onclick='openMap(${itemEnc})'>📍 Ver ubicación en plano</button>` : ''}
+    <div class="valve-actions">
+      <button class="btn-ok ${r.status==='ok'?'selected':''}" id="ok-${key}" onclick="setStatus('${key}','ok')">✓ CONFORME</button>
+      <button class="btn-fail ${r.status==='fail'?'selected':''}" id="fail-${key}" onclick="setStatus('${key}','fail')">✗ INCIDENCIA</button>
+    </div>
+    <div class="fail-section ${r.status==='fail'?'visible':''}" id="fs-${key}">
+      <label>NUEVO Nº PRECINTO COLOCADO</label>
+      <input class="new-seal-input" type="text" inputmode="numeric" placeholder="Ej: 5204999"
+        value="${r.newPrecinto||''}"
+        oninput="setField('${key}','newPrecinto',this.value)">
+      <label style="margin-top:4px">OBSERVACIONES</label>
+      <textarea class="obs-input" placeholder="Descripción de la incidencia..."
+        oninput="setField('${key}','obs',this.value)">${r.obs||''}</textarea>
+    </div>`;
+  return card;
+}
+
+function setStatus(key,status){
+  if(!S.results[key]) S.results[key]={status:'pending',newPrecinto:'',obs:''};
+  S.results[key].status=status;
+  const card=document.getElementById(`card-${key}`);
+  card.className=`valve-card ${status}`;
+  document.getElementById(`ok-${key}`).classList.toggle('selected',status==='ok');
+  document.getElementById(`fail-${key}`).classList.toggle('selected',status==='fail');
+  document.getElementById(`fs-${key}`).classList.toggle('visible',status==='fail');
+  if(status==='ok') S.results[key].newPrecinto='';
+  updateProgress(); saveDraft();
+  if(status==='ok') setTimeout(scrollNextPending,350);
+}
+
+function setField(key,field,val){
+  if(!S.results[key]) S.results[key]={status:'fail',newPrecinto:'',obs:''};
+  S.results[key][field]=val; saveDraft();
+}
+
+function scrollNextPending(){
+  for(const g of VALVE_GROUPS){
+    for(let i=0;i<g.valves.length;i++){
+      const key=`${g.id}_${i}`;
+      const r=S.results[key];
+      if(!r||r.status==='pending'){
+        const el=document.getElementById(`card-${key}`);
+        if(el){el.scrollIntoView({behavior:'smooth',block:'center'});return;}
+      }
+    }
+  }
+}
+
+function updateProgress(){
+  let tot=0,done=0;
+  VALVE_GROUPS.forEach(g=>g.valves.forEach((_,i)=>{
+    tot++;
+    const r=S.results[`${g.id}_${i}`];
+    if(r&&r.status!=='pending')done++;
+  }));
+  document.getElementById('prog-done').textContent=done;
+  document.getElementById('prog-total').textContent=tot;
+  document.getElementById('prog-fill').style.width=`${(done/tot)*100}%`;
+  const rem=tot-done;
+  document.getElementById('btn-finish').textContent=rem===0?'VER RESUMEN →':`VER RESUMEN (${rem} pendientes)`;
+}
+
+// ═══════════════════════════════════════
+// MAP — real image with pan/zoom + pins
+// ═══════════════════════════════════════
+function renderPins(){
+  const pinsDiv=document.getElementById('valve-pins');
+  const img=document.getElementById('map-img');
+  pinsDiv.innerHTML='';
+  // Pins div overlays the image exactly — same natural dimensions
+  // so left/top % are fractions of image pixels, not of the viewport
+  pinsDiv.style.cssText=`position:absolute;top:0;left:0;width:${img.naturalWidth}px;height:${img.naturalHeight}px;pointer-events:none;`;
+  VALVE_GROUPS.forEach(g=>{
+    g.valves.forEach((v,i)=>{
+      if(v.mx===undefined) return;
+      const pin=document.createElement('div');
+      pin.className=`valve-pin ${g.id}`;
+      pin.id=`pin-${g.id}-${i}`;
+      pin.style.left=`${v.mx}%`;
+      pin.style.top=`${v.my}%`;
+      pin.style.pointerEvents='all';
+      const label=v.item||v.t.substring(0,6);
+      pin.innerHTML=`<div class="valve-pin-dot">${label.replace(/[A-Z]+\./,'').substring(0,4)}</div><div class="valve-pin-label">${label}</div>`;
+      pin.addEventListener('click',(e)=>{e.stopPropagation();selectPin(g,v,i);});
+      pinsDiv.appendChild(pin);
+    });
+  });
+}
+
+function selectPin(g,v,idx){
+  // Clear previous highlight
+  document.querySelectorAll('.valve-pin').forEach(p=>p.classList.remove('highlighted'));
+  const pin=document.getElementById(`pin-${g.id}-${idx}`);
+  if(pin) pin.classList.add('highlighted');
+  activeHighlight=`${g.id}-${idx}`;
+  // Update info bar
+  const info=document.getElementById('map-info-text');
+  const posLabel=v.pos==='A'?'ABIERTA':'CERRADA';
+  info.innerHTML=`<strong>${v.item||'—'} · ${v.eq||v.t}</strong>
+    <span style="font-size:11px;color:var(--gray-500)">${v.t} · Precinto: <b>${v.p||'—'}</b> · Posición: <b style="color:${v.pos==='A'?'var(--green-dark)':'var(--red)'}">${posLabel}</b></span>`;
+  document.getElementById('map-hint').style.display='none';
+}
+
+function openMap(itemCode){
+  document.getElementById('map-modal').classList.add('open');
+  // Reset view then fit
+  setTimeout(()=>{
+    fitMap();
+    if(itemCode){
+      zoomToValve(itemCode);
+    } else {
+      document.querySelectorAll('.valve-pin').forEach(p=>p.classList.remove('highlighted'));
+      document.getElementById('map-info-text').textContent='Toca una válvula en el plano para ver su información';
+      document.getElementById('map-hint').style.display='block';
+    }
+  },80);
+}
+
+function closeMap(){
+  document.getElementById('map-modal').classList.remove('open');
+}
+
+function fitMap(){
+  const vp=document.getElementById('map-viewport');
+  const img=document.getElementById('map-img');
+  if(!img.naturalWidth) return;
+  const vpW=vp.clientWidth, vpH=vp.clientHeight;
+  // Scale to fit width (most maps are wider than tall)
+  mapScale=vpW/img.naturalWidth;
+  // If scaled height is less than viewport, also try fit-height
+  if(img.naturalHeight*mapScale < vpH){
+    mapScale=vpH/img.naturalHeight;
+  }
+  // Always start at top-left with no offset — pins are relative to image origin
+  mapX=0;
+  mapY=0;
+  applyTransform();
+}
+
+function zoomToValve(itemCode){
+  // Find the valve
+  let foundV=null, foundG=null, foundIdx=null;
+  for(const g of VALVE_GROUPS){
+    for(let i=0;i<g.valves.length;i++){
+      if(g.valves[i].item===itemCode){foundV=g.valves[i];foundG=g;foundIdx=i;break;}
+    }
+    if(foundV) break;
+  }
+  if(!foundV||foundV.mx===undefined) return;
+
+  // Highlight pin
+  document.querySelectorAll('.valve-pin').forEach(p=>p.classList.remove('highlighted'));
+  const pin=document.getElementById(`pin-${foundG.id}-${foundIdx}`);
+  if(pin) pin.classList.add('highlighted');
+  activeHighlight=`${foundG.id}-${foundIdx}`;
+
+  // Update info bar
+  const posLabel=foundV.pos==='A'?'ABIERTA':'CERRADA';
+  document.getElementById('map-info-text').innerHTML=`<strong>${foundV.item||'—'} · ${foundV.eq||foundV.t}</strong>
+    <span style="font-size:11px;color:var(--gray-500)">${foundV.t} · Precinto: <b>${foundV.p||'—'}</b> · Posición: <b style="color:${foundV.pos==='A'?'var(--green-dark)':'var(--red)'}">${posLabel}</b></span>`;
+  document.getElementById('map-hint').style.display='none';
+
+  // Animate zoom to valve position
+  const vp=document.getElementById('map-viewport');
+  const img=document.getElementById('map-img');
+  const vpW=vp.clientWidth, vpH=vp.clientHeight;
+  const targetScale=Math.min(vpW/img.naturalWidth, vpH/img.naturalHeight)*3.5;
+  // Position in image pixels
+  const pinImgX=(foundV.mx/100)*img.naturalWidth;
+  const pinImgY=(foundV.my/100)*img.naturalHeight;
+  mapScale=targetScale;
+  mapX=vpW/2 - pinImgX*mapScale;
+  mapY=vpH/2 - pinImgY*mapScale;
+  clampMap();
+  // Animate
+  const c=document.getElementById('map-container');
+  c.style.transition='transform .5s ease';
+  applyTransform();
+  setTimeout(()=>c.style.transition='',600);
+}
+
+function applyTransform(){
+  const c=document.getElementById('map-container');
+  c.style.transform=`translate(${mapX}px,${mapY}px) scale(${mapScale})`;
+}
+
+function clampMap(){
+  const vp=document.getElementById('map-viewport');
+  const img=document.getElementById('map-img');
+  if(!img.naturalWidth) return;
+  const vpW=vp.clientWidth, vpH=vp.clientHeight;
+  // Minimum scale: fit to width
+  const minScale=vpW/img.naturalWidth;
+  mapScale=Math.max(minScale, Math.min(mapScale, 8));
+  const sw=img.naturalWidth*mapScale, sh=img.naturalHeight*mapScale;
+  // Clamp so image cannot be panned past its edges
+  mapX=Math.min(0, Math.max(vpW-sw, mapX));
+  mapY=Math.min(0, Math.max(vpH-sh, mapY));
+}
+
+function mapZoom(factor){
+  const vp=document.getElementById('map-viewport');
+  const cx=vp.clientWidth/2, cy=vp.clientHeight/2;
+  mapX=(mapX-cx)*factor+cx;
+  mapY=(mapY-cy)*factor+cy;
+  mapScale*=factor;
+  clampMap();
+  const c=document.getElementById('map-container');
+  c.style.transition='transform .2s ease';
+  applyTransform();
+  setTimeout(()=>c.style.transition='',250);
+}
+
+function setupMapGestures(){
+  const vp=document.getElementById('map-viewport');
+  let lastTouches=null, lastDist=0, isDragging=false, startX=0, startY=0, startMapX=0, startMapY=0;
+
+  vp.addEventListener('touchstart',e=>{
+    if(e.touches.length===1){
+      isDragging=true;
+      startX=e.touches[0].clientX; startY=e.touches[0].clientY;
+      startMapX=mapX; startMapY=mapY;
+    } else if(e.touches.length===2){
+      isDragging=false;
+      lastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+      lastTouches=e.touches;
+    }
+    e.preventDefault();
+  },{passive:false});
+
+  vp.addEventListener('touchmove',e=>{
+    if(e.touches.length===1&&isDragging){
+      mapX=startMapX+(e.touches[0].clientX-startX);
+      mapY=startMapY+(e.touches[0].clientY-startY);
+      clampMap(); applyTransform();
+    } else if(e.touches.length===2){
+      const dist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+      const factor=dist/lastDist;
+      const cx=(e.touches[0].clientX+e.touches[1].clientX)/2;
+      const cy=(e.touches[0].clientY+e.touches[1].clientY)/2;
+      mapX=(mapX-cx)*factor+cx;
+      mapY=(mapY-cy)*factor+cy;
+      mapScale*=factor;
+      lastDist=dist; lastTouches=e.touches;
+      clampMap(); applyTransform();
+    }
+    e.preventDefault();
+  },{passive:false});
+
+  vp.addEventListener('touchend',()=>{ isDragging=false; });
+
+  // Mouse support
+  let mouseDown=false, mStartX=0, mStartY=0, mMapX=0, mMapY=0;
+  vp.addEventListener('mousedown',e=>{ mouseDown=true; mStartX=e.clientX; mStartY=e.clientY; mMapX=mapX; mMapY=mapY; });
+  vp.addEventListener('mousemove',e=>{ if(!mouseDown) return; mapX=mMapX+(e.clientX-mStartX); mapY=mMapY+(e.clientY-mStartY); clampMap(); applyTransform(); });
+  vp.addEventListener('mouseup',()=>mouseDown=false);
+  vp.addEventListener('wheel',e=>{ e.preventDefault(); const f=e.deltaY<0?1.15:0.87; mapZoom(f); },{passive:false});
+}
+
+// ═══════════════════════════════════════
+// SUMMARY
+// ═══════════════════════════════════════
+function showSummary(){
+  let ok=0,fails=0,pend=0;
+  const fList=[],oList=[];
+  VALVE_GROUPS.forEach(g=>g.valves.forEach((v,i)=>{
+    const r=S.results[`${g.id}_${i}`]||{status:'pending'};
+    if(r.status==='ok'){ok++;oList.push({v,r});}
+    else if(r.status==='fail'){fails++;fList.push({v,r,g});}
+    else pend++;
+  }));
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-card green"><div class="stat-num">${ok}</div><div class="stat-lbl">CONFORMES</div></div>
+    <div class="stat-card red"><div class="stat-num">${fails}</div><div class="stat-lbl">INCIDENCIAS</div></div>
+    <div class="stat-card gold"><div class="stat-num">${pend}</div><div class="stat-lbl">PENDIENTES</div></div>`;
+  const ab=document.getElementById('alert-pending');
+  if(pend>0){ab.classList.add('visible');ab.textContent=`⚠️ ${pend} válvula${pend>1?'s':''} pendiente${pend>1?'s':''}. Puedes enviar igualmente.`;}
+  else ab.classList.remove('visible');
+  document.getElementById('sum-fails').innerHTML=fList.length===0
+    ?'<div style="font-size:13px;color:var(--green);padding:8px 0;font-weight:600;">✓ Sin incidencias</div>'
+    :fList.map(({v,r})=>`<div class="sum-item"><div class="sum-dot fail"></div><div class="sum-info">
+      <div class="sum-item-name">${v.item||'—'} · ${v.eq||v.t}</div>
+      <div class="sum-item-detail">Precinto original: ${v.p||'—'}</div>
+      ${r.newPrecinto?`<div class="sum-item-detail warn">→ Nuevo precinto: ${r.newPrecinto}</div>`:''}
+      ${r.obs?`<div class="sum-item-detail" style="font-style:italic">${r.obs}</div>`:''}
+    </div></div>`).join('');
+  document.getElementById('sum-ok').innerHTML=oList.map(({v})=>`<div class="sum-item">
+    <div class="sum-dot ok"></div>
+    <div class="sum-info"><div class="sum-item-name">${v.item||'—'} · ${v.eq||v.t}</div></div>
+    <div class="sum-precinto">${v.p||'—'}</div>
+  </div>`).join('');
+  showScreen('screen-summary');
+}
+
+// ═══════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════
+function showHistory(){
+  const keys=Object.keys(localStorage).filter(k=>k.startsWith('masol_report_')).sort().reverse();
+  const cloudInsp=(cloudLoaded && cloudData.inspecciones) ? cloudData.inspecciones : [];
+  const c=document.getElementById('history-content');
+  if(!keys.length && !cloudInsp.length){
+    c.innerHTML=`<div style="text-align:center;padding:60px 0;color:var(--gray-500)">
+      <div style="font-size:48px;margin-bottom:12px">📋</div>
+      <div style="font-weight:700;font-size:16px">Sin inspecciones guardadas</div></div>`;
+  } else {
+    // Cloud inspections first (most recent from any device)
+    const cloudHtml = cloudInsp.map(r=>{
+      const f = r.incidencias > 0;
+      const md = new Date((r.mes||'2000-01')+'-01');
+      const ms = md.toLocaleString('es-ES',{month:'long',year:'numeric'});
+      return `<div class="hist-item ${f?'has-fails':''}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-size:10px;background:var(--blue-light);color:var(--blue);padding:2px 8px;border-radius:10px;font-weight:700;">☁️ NUBE</span>
+          <div style="font-weight:700;font-size:15px;color:var(--blue)">${ms.toUpperCase()}</div>
+        </div>
+        <div style="font-size:13px;color:var(--gray-500)">Operador: ${r.operador||'—'} · Equipo ${r.equipo||'—'} · ${r.fecha||''}</div>
+        <div style="font-size:13px;margin-top:6px;font-weight:600;color:${f?'var(--red)':'var(--green)'}">
+          ${f?`⚠️ ${r.incidencias} incidencia${r.incidencias>1?'s':''}`:'✓ Sin incidencias'}
+          &nbsp;·&nbsp; ✓ ${r.conformes||0} conformes</div></div>`;
+    }).join('');
+    c.innerHTML = cloudHtml + keys.map(k=>{
+      const r=JSON.parse(localStorage.getItem(k));
+      const f=Object.values(r.results||{}).filter(x=>x.status==='fail').length;
+      const md=new Date(r.mes+'-01');
+      const ms=md.toLocaleString('es-ES',{month:'long',year:'numeric'});
+      return `<div class="hist-item ${f?'has-fails':''}">
+        <div style="font-weight:700;font-size:16px;color:var(--blue)">${ms.toUpperCase()}</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:3px">Operador: ${r.operador} · Equipo ${r.equipo}</div>
+        <div style="font-size:13px;margin-top:6px;font-weight:600;color:${f?'var(--red)':'var(--green)'}">
+          ${f?`⚠️ ${f} incidencia${f>1?'s':''}`:'✓ Sin incidencias'}</div></div>`;
+    }).join('');
+  }
+  showScreen('screen-history');
+}
+
+// ═══════════════════════════════════════
+// PDF
+// ═══════════════════════════════════════
+function buildPDF(){
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const md=new Date(S.mes+'-01');
+  const ms=md.toLocaleString('es-ES',{month:'long',year:'numeric'});
+  const today=new Date().toLocaleDateString('es-ES');
+
+  doc.setFillColor(27,52,128); doc.rect(0,0,297,18,'F');
+  doc.setFillColor(0,150,63);  doc.rect(0,0,50,18,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.text('MASOL',6,11);
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.text('Cartagena Biofuel',6,16);
+  doc.setFontSize(13); doc.setFont('helvetica','bold');
+  doc.text('REVISIÓN DE VÁLVULAS — SISTEMA CONTRA INCENDIOS',55,11);
+  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.text(today,289,11,{align:'right'});
+
+  doc.setFillColor(240,244,255); doc.rect(0,18,297,12,'F');
+  doc.setTextColor(27,52,128); doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text(`PERÍODO: ${ms.toUpperCase()}`,8,27);
+  doc.text(`OPERADOR: ${S.operador}`,80,27);
+  doc.text(`EQUIPO: ${S.equipo}`,185,27);
+
+  let ok=0,fails=0,pend=0; const fList=[];
+  VALVE_GROUPS.forEach(g=>g.valves.forEach((v,i)=>{
+    const r=S.results[`${g.id}_${i}`]||{status:'pending'};
+    if(r.status==='ok')ok++;
+    else if(r.status==='fail'){fails++;fList.push({v,r});}
+    else pend++;
+  }));
+
+  doc.setFillColor(232,245,238); doc.rect(8,33,42,18,'F'); doc.setDrawColor(0,150,63); doc.rect(8,33,42,18,'D');
+  doc.setFillColor(253,236,234); doc.rect(54,33,42,18,'F'); doc.setDrawColor(211,47,47); doc.rect(54,33,42,18,'D');
+  doc.setFillColor(254,248,217); doc.rect(100,33,42,18,'F'); doc.setDrawColor(245,196,0); doc.rect(100,33,42,18,'D');
+  doc.setFontSize(18); doc.setFont('helvetica','bold');
+  doc.setTextColor(0,150,63); doc.text(String(ok),29,47,{align:'center'});
+  doc.setTextColor(211,47,47); doc.text(String(fails),75,47,{align:'center'});
+  doc.setTextColor(184,146,10); doc.text(String(pend),121,47,{align:'center'});
+  doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(100,120,160);
+  doc.text('CONFORMES',29,52,{align:'center'});
+  doc.text('INCIDENCIAS',75,52,{align:'center'});
+  doc.text('PENDIENTES',121,52,{align:'center'});
+
+  let y=60;
+  const cols=[8,20,40,74,136,178,210,235,262];
+  const hdrs=['Nº','Item','Equipo','Tipo Válvula','Pos.','Precinto','Estado','Nuevo Precinto','Observaciones'];
+  doc.setFillColor(27,52,128); doc.rect(8,y,281,7,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+  hdrs.forEach((h,i)=>doc.text(h,cols[i]+1,y+5)); y+=8;
+
+  VALVE_GROUPS.forEach(g=>{
+    if(y>185){doc.addPage();y=15;}
+    doc.setFillColor(238,241,250); doc.rect(8,y,281,6,'F');
+    doc.setTextColor(27,52,128); doc.setFontSize(7); doc.setFont('helvetica','bold');
+    doc.text(g.name,10,y+4.5); y+=7;
+    g.valves.forEach((v,idx)=>{
+      if(y>188){doc.addPage();y=15;}
+      const key=`${g.id}_${idx}`;
+      const r=S.results[key]||{status:'pending',newPrecinto:'',obs:''};
+      doc.setFillColor(idx%2===0?255:248,idx%2===0?255:250,idx%2===0?255:255);
+      doc.rect(8,y,281,6.5,'F');
+      doc.setDrawColor(220,225,235); doc.rect(8,y,281,6.5,'D');
+      doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(60,70,100);
+      doc.text(String(v.n||''),cols[0]+1,y+4.5);
+      doc.text((v.item||'').substring(0,16),cols[1]+1,y+4.5);
+      doc.text((v.eq||'').substring(0,22),cols[2]+1,y+4.5);
+      doc.text((v.t||'').substring(0,32),cols[3]+1,y+4.5);
+      doc.setFont('helvetica','bold');
+      if(v.pos==='A')doc.setTextColor(0,107,45); else doc.setTextColor(211,47,47);
+      doc.text(v.pos==='A'?'ABIERTA':'CERRADA',cols[4]+1,y+4.5);
+      doc.setFont('helvetica','normal'); doc.setTextColor(27,52,128);
+      doc.text((v.p||'').substring(0,14),cols[5]+1,y+4.5);
+      doc.setFont('helvetica','bold');
+      if(r.status==='ok'){doc.setTextColor(0,107,45);doc.text('CONFORME',cols[6]+1,y+4.5);}
+      else if(r.status==='fail'){doc.setTextColor(211,47,47);doc.text('INCIDENCIA',cols[6]+1,y+4.5);}
+      else{doc.setTextColor(150,150,150);doc.setFont('helvetica','normal');doc.text('Pendiente',cols[6]+1,y+4.5);}
+      doc.setFont('helvetica','normal'); doc.setTextColor(60,70,100);
+      doc.text((r.newPrecinto||'').substring(0,13),cols[7]+1,y+4.5);
+      doc.text((r.obs||'').substring(0,30),cols[8]+1,y+4.5);
+      y+=6.5;
+    });
+    y+=2;
+  });
+
+  const tp=doc.getNumberOfPages();
+  for(let p=1;p<=tp;p++){
+    doc.setPage(p);
+    doc.setFillColor(238,241,250); doc.rect(0,200,297,10,'F');
+    doc.setDrawColor(0,150,63); doc.line(8,200,289,200);
+    doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(100,120,160);
+    doc.text(`MASOL Cartagena Biofuel — Revisión PCI ${ms} — Verificado: ${S.operador} — Equipo ${S.equipo}`,8,206);
+    doc.text(`Pág. ${p}/${tp}`,289,206,{align:'right'});
+  }
+  return doc;
+}
+
+function downloadPDF(){
+  buildPDF().save(`MASOL_PCI_Revision_${S.mes}.pdf`);
+  showToast('✓ PDF descargado','ok');
+}
+
+// ═══════════════════════════════════════
+// SEND — PDF adjunto automático via data URI + mailto
+// Nota: adjunto real no es posible via mailto estándar.
+// Solución: descarga PDF automáticamente + abre correo prerellenado.
+// El operador solo arrastra el PDF (ya descargado) al correo.
+// ═══════════════════════════════════════
+function confirmSend(){
+  showModal('Enviar informe PCI',
+    `El informe se descargará como PDF y se abrirá el correo prerellenado.\n\n📧 pedro.montero@masolgruppo.com\n📧 CC: inmaculada.guzman@masolgruppo.com\n📧 CC: francisco.bano@masolgruppo.com\n\n⚠️ Deberás adjuntar el PDF descargado al correo antes de enviarlo.`,
+    doSend);
+}
+
+function doSend(){
+  closeModal();
+  const sl=document.getElementById('sending-overlay');
+  const st=document.getElementById('sending-text');
+  sl.classList.add('open');
+  st.textContent='GENERANDO PDF...';
+
+  setTimeout(()=>{
+    try{
+      // 1) Compute stats FIRST (needed for Sheets and email)
+      const md=new Date(S.mes+'-01');
+      const ms=md.toLocaleString('es-ES',{month:'long',year:'numeric'});
+      let ok=0,fails=0,pend=0; const fl=[];
+      const resultsForSheets={};
+      VALVE_GROUPS.forEach(g=>g.valves.forEach((v,i)=>{
+        const k=`${g.id}_${i}`;
+        const r=S.results[k]||{status:'pending'};
+        if(r.status==='ok')ok++;
+        else if(r.status==='fail'){
+          fails++;
+          fl.push(`- ${v.item||'Sin item'} (${v.eq||v.t}): ${r.obs||'Sin obs.'} | Nuevo precinto: ${r.newPrecinto||'No colocado'}`);
+        } else pend++;
+        if(S.results[k]){
+          resultsForSheets[k]={...S.results[k], item:v.item||v.t};
+        }
+      }));
+
+      // 2) Generate and download PDF
+      const doc=buildPDF();
+      const pdfFilename=`MASOL_PCI_Revision_${S.mes}.pdf`;
+      doc.save(pdfFilename);
+
+      // 3) Push new precintos to Sheets
+      VALVE_GROUPS.forEach(g=>g.valves.forEach((v,i)=>{
+        const r=S.results[`${g.id}_${i}`];
+        if(r && r.newPrecinto && r.newPrecinto.trim()){
+          pushPrecinto(v.item||v.t, r.newPrecinto, S.operador);
+        }
+      }));
+
+      // 4) Push full inspection to Sheets
+      pushInspeccion({
+        mes:S.mes, operador:S.operador, equipo:S.equipo,
+        conformes:ok, incidencias:fails, pendientes:pend,
+        resultados:resultsForSheets
+      });
+
+      // 5) Save locally and RESET state for next inspection
+      localStorage.setItem(`masol_report_${S.mes}_${Date.now()}`,JSON.stringify({
+        mes:S.mes,operador:S.operador,equipo:S.equipo,results:S.results,ts:new Date().toISOString()
+      }));
+      localStorage.removeItem('masol_draft');
+      // Save operator/equipo before reset (needed for email body below)
+      const savedOperador = S.operador;
+      const savedEquipo = S.equipo;
+      const savedMes = S.mes;
+      // Reset full state so next inspection starts completely clean
+      S.results={};
+      S.operador=''; S.equipo=''; S.mes='';
+      // Clear the form fields too
+      try{
+        document.getElementById('inp-operador').value='';
+        document.getElementById('inp-equipo').value='';
+        const now=new Date();
+        document.getElementById('inp-mes').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      }catch(ex){}
+
+      // 6) Build email and open with window.open (avoids page navigation on PC)
+      st.textContent='ABRIENDO CORREO...';
+      const subj=encodeURIComponent(`[MASOL PCI] Revisión válvulas contra incendios — ${ms}`);
+      const body=encodeURIComponent(
+`Estimado Pedro,
+
+Adjunto el informe de revisión mensual de válvulas del sistema contra incendios correspondiente a ${ms}.
+
+RESUMEN:
+✓ Conformes: ${ok}
+✗ Incidencias: ${fails}
+⏳ Pendientes: ${pend}
+
+${fails>0?`INCIDENCIAS DETECTADAS:\n${fl.join('\n')}\n`:'Sin incidencias detectadas.\n'}${pend>0?`NOTA: ${pend} válvula(s) pendiente(s) de revisar.\n`:''}
+Revisado por: ${savedOperador} — Equipo ${savedEquipo}
+Fecha: ${new Date().toLocaleDateString('es-ES')}
+
+IMPORTANTE: Se ha descargado automáticamente el archivo "${pdfFilename}". Por favor, adjúntelo a este correo antes de enviarlo.
+
+Saludos,
+${savedOperador}
+MASOL Cartagena Biofuel`);
+
+      sl.classList.remove('open');
+      const mailto=`mailto:pedro.montero@masolgruppo.com?cc=inmaculada.guzman@masolgruppo.com;francisco.bano@masolgruppo.com&subject=${subj}&body=${body}`;
+      // Use window.open to avoid navigating away (keeps app alive on PC)
+      const mailWin = window.open(mailto, '_blank');
+      if(!mailWin) window.location.href = mailto; // fallback for mobile
+
+      showToast('✓ PDF descargado — Adjúntalo al correo','ok');
+      // Return to home after short delay so user sees confirmation
+      // Go to home immediately so user sees clean start screen
+      showScreen('screen-home');
+
+    }catch(e){
+      sl.classList.remove('open');
+      showToast('⚠️ Error al generar','err');
+      console.error(e);
+    }
+  },900);
+}
+
+// ═══════════════════════════════════════
+// MODAL / TOAST
+// ═══════════════════════════════════════
+let _mCb=null;
+function showModal(title,text,cb){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-text').textContent=text;
+  _mCb=cb;
+  document.getElementById('modal-ok').onclick=()=>{closeModal();if(_mCb)_mCb();};
+  document.getElementById('modal-confirm').classList.add('open');
+}
+function closeModal(){ document.getElementById('modal-confirm').classList.remove('open'); }
+
+let _tt=null;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast show ${type}`;
+  if(_tt)clearTimeout(_tt);
+  _tt=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+
+// ═══════════════════════════════════════
+// GOOGLE SHEETS SYNC
+// ═══════════════════════════════════════
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzhCws8G4XA4tZ5at9jawdHeNBFtO24-OlxKBEq5UC47ol0okzG_uCIEGNS9qbi7bHeIQ/exec'; // URL fija — no requiere configuración por dispositivo
+
+let cloudData = { precintos:{}, estados:{}, inspecciones:[] };
+let cloudLoaded = false;
+
+async function loadCloudData(){
+  const cs = document.getElementById('cloud-status');
+  if(!SHEETS_URL){
+    if(cs) cs.innerHTML = '☁️ <span style="color:var(--red)">URL no configurada</span>';
+    return;
+  }
+  if(cs) cs.innerHTML = '☁️ Sincronizando...';
+  try{
+    const url = SHEETS_URL + '?action=getAll&t=' + Date.now();
+    const r = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+      cache: 'no-store'
+    });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch(pe) { throw new Error('JSON inválido: ' + text.substring(0,100)); }
+    if(data.ok){
+      cloudData = data;
+      cloudLoaded = true;
+      const overrides = {};
+      Object.entries(data.estados||{}).forEach(([item,d])=>{ overrides[item]=d.posicion; });
+      localStorage.setItem('masol_pos_overrides', JSON.stringify(overrides));
+      if(cs) cs.innerHTML = '☁️ <span style="color:var(--green-dark);font-weight:700;">Sincronizado</span> · '
+        + new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+      const insp = document.getElementById('screen-inspection');
+      if(insp && insp.classList.contains('active')) renderInspection();
+    } else {
+      if(cs) cs.innerHTML = '☁️ <span style="color:var(--red)">Error: ' + (data.error||'desconocido') + '</span>';
+      console.error('Sheets error:', data);
+    }
+  } catch(e){
+    if(cs) cs.innerHTML = '☁️ <span style="color:var(--gold)">Sin conexión · ' + e.message + '</span>';
+    console.error('Sheets sync error:', e);
+  }
+}
+
+async function pushPrecinto(item, precinto, operador){
+  if(!SHEETS_URL) return;
+  try{
+    await fetch(SHEETS_URL+'?action=setPrecinto&item='+encodeURIComponent(item)+'&precinto='+encodeURIComponent(precinto)+'&actualizador='+encodeURIComponent(operador));
+    if(!cloudData.precintos) cloudData.precintos={};
+    cloudData.precintos[item]={precinto, fecha:new Date().toLocaleString('es-ES'), actualizador:operador};
+  } catch(e){ console.warn('Error pushPrecinto:', e); }
+}
+
+async function pushEstado(item, posicion){
+  if(!SHEETS_URL) return;
+  try{
+    await fetch(SHEETS_URL+'?action=setEstado&item='+encodeURIComponent(item)+'&posicion='+encodeURIComponent(posicion)+'&actualizador=Admin');
+  } catch(e){ console.warn('Error pushEstado:', e); }
+}
+
+async function pushInspeccion(body){
+  if(!SHEETS_URL) return;
+  try{
+    await fetch(SHEETS_URL+'?action=saveInspeccion', {method:'POST', body:JSON.stringify(body)});
+  } catch(e){ console.warn('Error pushInspeccion:', e); }
+}
+
+function getCurrentPrecinto(item, defaultPrecinto){
+  if(cloudLoaded && cloudData.precintos && cloudData.precintos[item]){
+    return cloudData.precintos[item].precinto;
+  }
+  return defaultPrecinto;
+}
+
+function openSheetsConfig(){
+  // URL is hardcoded — no configuration needed
+  showToast('✓ Sincronización con Google Sheets configurada','ok');
+}
+
+
+// ═══════════════════════════════════════
+// ADMIN — position state management
+// ═══════════════════════════════════════
+const ADMIN_PIN = '3430000009Masol123';
+
+function loadPosOverrides(){
+  return JSON.parse(localStorage.getItem('masol_pos_overrides')||'{}');
+}
+function savePosOverrides(overrides){
+  localStorage.setItem('masol_pos_overrides', JSON.stringify(overrides));
+}
+function getValvePos(item, defaultPos){
+  const overrides = loadPosOverrides();
+  return overrides[item] !== undefined ? overrides[item] : defaultPos;
+}
+
+function openAdminLogin(){
+  document.getElementById('admin-pin-input').value='';
+  document.getElementById('admin-pin-error').style.display='none';
+  document.getElementById('modal-admin-login').classList.add('open');
+  setTimeout(()=>document.getElementById('admin-pin-input').focus(),200);
+}
+function closeAdminLogin(){
+  document.getElementById('modal-admin-login').classList.remove('open');
+}
+function checkAdminPin(){
+  const val = document.getElementById('admin-pin-input').value;
+  if(val === ADMIN_PIN){
+    closeAdminLogin();
+    openAdminPanel();
+  } else {
+    document.getElementById('admin-pin-error').style.display='block';
+    document.getElementById('admin-pin-input').value='';
+    document.getElementById('admin-pin-input').focus();
+  }
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const pinInput = document.getElementById('admin-pin-input');
+  if(pinInput) pinInput.addEventListener('keydown', e=>{ if(e.key==='Enter') checkAdminPin(); });
+});
+
+let adminEdits = {};
+
+function openAdminPanel(){
+  adminEdits = {...loadPosOverrides()};
+  renderAdminList();
+  showScreen('screen-admin');
+}
+
+function renderAdminList(){
+  const list = document.getElementById('admin-valve-list');
+  list.innerHTML = '';
+  VALVE_GROUPS.forEach(g=>{
+    const hdr = document.createElement('div');
+    hdr.className = 'admin-group-hdr';
+    hdr.textContent = g.name;
+    list.appendChild(hdr);
+    const card = document.createElement('div');
+    card.style.cssText = 'background:white;margin-bottom:2px;';
+    g.valves.forEach(v=>{
+      const currentPos = adminEdits[v.item||v.t] !== undefined ? adminEdits[v.item||v.t] : v.pos;
+      const label = v.item || v.t.substring(0,25);
+      const safeKey = label.replace(/[^a-z0-9]/gi,'_');
+      const row = document.createElement('div');
+      row.className = 'admin-pos-row';
+      row.innerHTML = `
+        <div class="admin-pos-info">
+          <div class="admin-pos-name">${label}</div>
+          <div class="admin-pos-type">${v.eq||v.t}</div>
+        </div>
+        <div class="admin-toggle">
+          <button id="abtn-a-${safeKey}" class="${currentPos==='A'?'active-a':''}"
+            onclick="setAdminPos('${label}','A')">ABIERTA</button>
+          <button id="abtn-c-${safeKey}" class="${currentPos==='C'?'active-c':''}"
+            onclick="setAdminPos('${label}','C')">CERRADA</button>
+        </div>`;
+      card.appendChild(row);
+    });
+    list.appendChild(card);
+  });
+}
+
+function setAdminPos(item, pos){
+  adminEdits[item] = pos;
+  const key = item.replace(/[^a-z0-9]/gi,'_');
+  const btnA = document.getElementById('abtn-a-'+key);
+  const btnC = document.getElementById('abtn-c-'+key);
+  if(btnA) btnA.className = pos==='A'?'active-a':'';
+  if(btnC) btnC.className = pos==='C'?'active-c':'';
+}
+
+function saveAdminChanges(){
+  const finalOverrides = {};
+  VALVE_GROUPS.forEach(g=>{
+    g.valves.forEach(v=>{
+      const key = v.item||v.t;
+      const edited = adminEdits[key];
+      if(edited !== undefined && edited !== v.pos){
+        finalOverrides[key] = edited;
+      }
+    });
+  });
+  Object.entries(finalOverrides).forEach(([item,pos])=>{ pushEstado(item, pos); });
+  savePosOverrides(finalOverrides);
+  showScreen('screen-home');
+  showToast('✓ Estados de válvulas actualizados','ok');
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
