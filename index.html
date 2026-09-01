@@ -205,6 +205,23 @@ body{font-family:'Titillium Web',sans-serif;background:var(--gray-50);color:var(
 .detail-fail-obs{font-size:12px;font-style:italic;color:var(--gray-600);margin-top:3px;}
 .detail-ok-list{font-size:12px;color:var(--gray-500);line-height:1.8;}
 .detail-ok-item{display:inline-block;background:rgba(0,150,63,.07);color:var(--green-dark);border-radius:4px;padding:1px 7px;margin:2px 2px;}
+
+/* ── ADMIN PANEL ── */
+.admin-pin-input{background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);color:var(--gray-900);font-family:'Titillium Web',sans-serif;font-size:20px;font-weight:700;padding:14px 16px;width:100%;letter-spacing:3px;outline:none;text-align:center;}
+.admin-pin-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,196,0,.15);}
+.admin-group-hdr{background:var(--blue-light);border-left:3px solid var(--blue);padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue);margin-top:4px;}
+.admin-pos-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--gray-100);background:white;}
+.admin-pos-row:last-child{border-bottom:none;}
+.admin-pos-info{flex:1;min-width:0;}
+.admin-pos-name{font-weight:700;font-size:14px;color:var(--blue);}
+.admin-pos-type{font-size:11px;color:var(--gray-500);margin-top:2px;}
+.admin-toggle{display:flex;border-radius:10px;overflow:hidden;flex-shrink:0;border:2px solid var(--gray-200);background:var(--gray-100);}
+.admin-toggle button{border:none;padding:10px 16px;font-family:'Titillium Web',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;background:transparent;color:var(--gray-500);min-width:85px;}
+.admin-toggle button:first-child{border-right:1px solid var(--gray-200);}
+.admin-toggle button.active-a{background:var(--green);color:white;}
+.admin-toggle button.active-c{background:var(--red);color:white;}
+.admin-changed-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:var(--gold-light);color:#7a6000;border:1px solid var(--gold);flex-shrink:0;display:none;}
+.admin-changed-badge.visible{display:inline-block;}
 </style>
 </head>
 <body>
@@ -258,6 +275,8 @@ body{font-family:'Titillium Web',sans-serif;background:var(--gray-50);color:var(
     </div>
     <button class="btn-secondary" onclick="showHistory()">📋 Historial de inspecciones</button>
     <button class="btn-secondary" style="margin-top:8px" onclick="openMap(null)">🗺️ Ver plano de planta</button>
+    <button class="btn-secondary" style="margin-top:8px;border-color:#F5C400;color:#7a6000;" onclick="openAdminLogin()">🔧 Cambiar estado de válvulas</button>
+    <div id="cloud-status" style="margin-top:10px;font-size:12px;text-align:center;color:var(--gray-500);padding:6px;">☁️ Iniciando...</div>
   </div>
 </div>
 
@@ -341,6 +360,36 @@ body{font-family:'Titillium Web',sans-serif;background:var(--gray-50);color:var(
       <button class="zoom-btn" onclick="mapZoom(0.6)">−</button>
       <button class="zoom-btn" onclick="mapZoom(1.4)">+</button>
     </div>
+  </div>
+</div>
+
+
+<!-- ═══ ADMIN LOGIN ═══ -->
+<div class="modal-overlay" id="modal-admin-login">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔧 Acceso administrador</div>
+    <div class="modal-text">Introduce la clave para modificar el estado de las válvulas.</div>
+    <input id="admin-pin-input" class="admin-pin-input" type="password" placeholder="••••••••••••••••••" autocomplete="off">
+    <div id="admin-pin-error" style="color:var(--red);font-size:12px;margin-top:8px;display:none;">Clave incorrecta. Inténtalo de nuevo.</div>
+    <button class="btn-primary" style="margin-top:16px;margin-bottom:10px" onclick="checkAdminPin()">ACCEDER</button>
+    <button class="btn-secondary" onclick="closeAdminLogin()">Cancelar</button>
+  </div>
+</div>
+
+<!-- ═══ ADMIN PANEL ═══ -->
+<div id="screen-admin" class="screen">
+  <div class="app-header">
+    <button class="btn-back" onclick="showScreen('screen-home')">‹</button>
+    <div style="flex:1"><div class="header-title">Estado de Válvulas</div><div class="header-sub">Modo administrador</div></div>
+    <div style="font-size:11px;color:rgba(255,255,255,.7);background:rgba(245,196,0,.2);padding:4px 10px;border-radius:6px;border:1px solid rgba(245,196,0,.4);">ADMIN</div>
+  </div>
+  <div style="background:var(--gold-light);border-bottom:1px solid var(--gold);padding:10px 16px;font-size:12px;color:#7a6000;font-weight:600;flex-shrink:0;">
+    ⚠️ Pulsa ABIERTA o CERRADA para cambiar el estado. Las válvulas modificadas se resaltan en amarillo.
+  </div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:80px" id="admin-valve-list"></div>
+  <div style="position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--gray-100);padding:12px 16px;box-shadow:0 -4px 16px rgba(0,0,0,.08)">
+    <button class="btn-primary" id="admin-save-btn" onclick="saveAdminChanges()">← VOLVER SIN CAMBIOS</button>
   </div>
 </div>
 
@@ -445,12 +494,83 @@ const VALVE_GROUPS = [
 // ═══════════════════════════════════════
 let S = { operador:'', equipo:'', mes:'', results:{} };
 
-// Cloud data (populated if Google Sheets is configured)
+// ═══════════════════════════════════════
+// GOOGLE SHEETS SYNC
+// ═══════════════════════════════════════
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyc2zQulT8UbxhAAN-KnlBo0ZIztOW9gSyzxJcoEXN2reBVQufI7IF1cgaK2LbX-kFkFA/exec';
 let cloudData = { precintos:{}, estados:{}, inspecciones:[] };
 let cloudLoaded = false;
 
+async function loadCloudData(){
+  const cs = document.getElementById('cloud-status');
+  if(cs) cs.innerHTML = '☁️ Sincronizando...';
+  try{
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 20000);
+    const r = await fetch(SHEETS_URL+'?action=getAll&t='+Date.now(), {method:'GET',redirect:'follow',cache:'no-store',signal:controller.signal});
+    clearTimeout(timeout);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data = await r.json();
+    if(data.ok){
+      cloudData = data;
+      cloudLoaded = true;
+      // Apply cloud estados as local overrides
+      const overrides={};
+      Object.entries(data.estados||{}).forEach(([item,d])=>{overrides[item]=d.posicion;});
+      localStorage.setItem('masol_pos_overrides',JSON.stringify(overrides));
+      // Replace local precinto cache with cloud data (cloud is authoritative)
+      const pCache={};
+      Object.entries(data.precintos||{}).forEach(([k,d])=>{pCache[k]=d.precinto;});
+      savePrecintoCache(pCache);
+      if(cs) cs.innerHTML='☁️ <span style="color:var(--green-dark);font-weight:700;">Sincronizado</span> · '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    } else {
+      if(cs) cs.innerHTML='☁️ <span style="color:var(--red)">Error: '+(data.error||'desconocido')+'</span>';
+    }
+  } catch(e){
+    if(cs) cs.innerHTML='☁️ <span style="color:var(--gold)">Sin conexión · '+e.message+'</span>';
+    console.warn('Sheets sync error:',e);
+  }
+}
+
+function getCurrentPrecinto(item, defaultP){
+  if(cloudLoaded && cloudData.precintos && cloudData.precintos[item])
+    return cloudData.precintos[item].precinto;
+  const cache=loadPrecintoCache();
+  if(cache[item]) return cache[item];
+  return defaultP;
+}
+
+async function pushPrecinto(item, precinto, operador){
+  setCachedPrecinto(item, precinto);
+  if(!cloudData.precintos) cloudData.precintos={};
+  cloudData.precintos[item]={precinto, fecha:new Date().toLocaleString('es-ES'), actualizador:operador};
+  try{
+    await fetch(SHEETS_URL+'?action=setPrecinto&item='+encodeURIComponent(item)+'&precinto='+encodeURIComponent(precinto)+'&actualizador='+encodeURIComponent(operador));
+  } catch(e){ console.warn('pushPrecinto error:',e); }
+}
+
+async function pushEstado(item, posicion){
+  try{
+    await fetch(SHEETS_URL+'?action=setEstado&item='+encodeURIComponent(item)+'&posicion='+encodeURIComponent(posicion)+'&actualizador=Admin');
+  } catch(e){ console.warn('pushEstado error:',e); }
+}
+
+async function pushInspeccion(body){
+  try{
+    await fetch(SHEETS_URL+'?action=saveInspeccion',{method:'POST',body:JSON.stringify(body)});
+  } catch(e){ console.warn('pushInspeccion error:',e); }
+}
+
 // Map pan/zoom state
 let mapScale=1, mapX=0, mapY=0;
+
+// ── Precinto cache ──
+function loadPosOverrides(){ return JSON.parse(localStorage.getItem('masol_pos_overrides')||'{}'); }
+function savePosOverrides(o){ localStorage.setItem('masol_pos_overrides',JSON.stringify(o)); }
+function getValvePos(item,defaultPos){ const o=loadPosOverrides(); return o[item]!==undefined?o[item]:defaultPos; }
+function loadPrecintoCache(){ return JSON.parse(localStorage.getItem('masol_precinto_cache')||'{}'); }
+function savePrecintoCache(c){ localStorage.setItem('masol_precinto_cache',JSON.stringify(c)); }
+function setCachedPrecinto(item,precinto){ const c=loadPrecintoCache(); c[item]=precinto; savePrecintoCache(c); }
 let mapImgW=0, mapImgH=0;
 let activeHighlight=null;
 
@@ -471,6 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPins();
   };
   setupMapGestures();
+  loadCloudData();
 });
 
 // ═══════════════════════════════════════
@@ -501,8 +622,7 @@ function startInspection(){
   S.operador=op; S.equipo=eq; S.mes=mes;
   const d=JSON.parse(localStorage.getItem('masol_draft')||'{}');
   S.results=(d.operador===op&&d.mes===mes)?(d.results||{}):{};
-  renderInspection();
-  showScreen('screen-inspection');
+  loadCloudData().then(()=>{ renderInspection(); showScreen('screen-inspection'); });
 }
 
 // ═══════════════════════════════════════
@@ -536,7 +656,8 @@ function makeCard(v,gid,idx,r){
   const card=document.createElement('div');
   card.className=`valve-card ${r.status}`; card.id=`card-${key}`;
   const dN=v.n||'·', dItem=v.item||'—', dEq=v.eq||v.t;
-  const posLabel=v.pos==='A'?'ABIERTA':'CERRADA';
+  const effPos=getValvePos(v.item||v.t, v.pos);
+  const posLabel=effPos==='A'?'ABIERTA':'CERRADA';
   // Encode item for onclick safely
   const itemEnc=JSON.stringify(v.item||'');
   card.innerHTML=`
@@ -547,11 +668,11 @@ function makeCard(v,gid,idx,r){
         <div class="valve-equipo">${dEq}</div>
         <div class="valve-tipo">${v.t}</div>
       </div>
-      <span class="pos-badge ${v.pos}">${posLabel}</span>
+      <span class="pos-badge ${effPos}">${posLabel}</span>
     </div>
     <div class="precinto-row">
       <span class="precinto-lbl">Precinto actual:</span>
-      <span class="precinto-val">${v.p||'—'}</span>
+      <span class="precinto-val">${getCurrentPrecinto(v.item||v.t, v.p)||'—'}</span>
     </div>
     <button class="map-btn" onclick='openMap(${itemEnc})'>
       📍 Ver ubicación en plano
@@ -1079,7 +1200,21 @@ function doSend(){
       const pdfFilename=`MASOL_PCI_Revision_${S.mes}.pdf`;
       doc.save(pdfFilename);
 
-      // 2) Save to history
+      // 2) Compute stats & push to Sheets
+      let ok2=0,fails2=0,pend2=0;
+      const resultsFS={};
+      VALVE_GROUPS.forEach(g=>g.valves.forEach((v,i)=>{
+        const k=`${g.id}_${i}`, r=S.results[k]||{status:'pending'};
+        if(r.status==='ok')ok2++; else if(r.status==='fail')fails2++; else pend2++;
+        if(S.results[k]) resultsFS[k]={...S.results[k],item:v.item||v.t};
+      }));
+      const savedOp=S.operador, savedEq=S.equipo, savedMes=S.mes;
+      VALVE_GROUPS.forEach(g=>g.valves.forEach((v,i)=>{
+        const r=S.results[`${g.id}_${i}`];
+        if(r&&r.newPrecinto&&r.newPrecinto.trim()) pushPrecinto(v.item||v.t,r.newPrecinto,savedOp);
+      }));
+      pushInspeccion({mes:savedMes,operador:savedOp,equipo:savedEq,conformes:ok2,incidencias:fails2,pendientes:pend2,resultados:resultsFS});
+      // 3) Save to history locally
       localStorage.setItem(`masol_report_${S.mes}_${Date.now()}`,JSON.stringify({
         mes:S.mes,operador:S.operador,equipo:S.equipo,results:S.results,ts:new Date().toISOString()
       }));
@@ -1111,13 +1246,13 @@ RESUMEN:
 
 ${fails>0?`INCIDENCIAS DETECTADAS:\n${fl.join('\n')}\n`:'Sin incidencias detectadas.\n'}
 ${pend>0?`NOTA: ${pend} válvula(s) pendiente(s) de revisar.\n`:''}
-Revisado por: ${S.operador} — Equipo ${S.equipo}
+Revisado por: ${savedOp||S.operador} — Equipo ${savedEq||S.equipo}
 Fecha: ${new Date().toLocaleDateString('es-ES')}
 
 IMPORTANTE: Se ha descargado automáticamente el archivo "${pdfFilename}". Por favor, adjúntelo a este correo antes de enviarlo.
 
 Saludos,
-${S.operador}
+${savedOp||S.operador}
 MASOL Cartagena Biofuel`);
 
       sl.classList.remove('open');
@@ -1155,6 +1290,124 @@ function showToast(msg,type=''){
   t.textContent=msg; t.className=`toast show ${type}`;
   if(_tt)clearTimeout(_tt);
   _tt=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+
+// ═══════════════════════════════════════
+// ADMIN — valve position management
+// ═══════════════════════════════════════
+const ADMIN_PIN='3430000009Masol123';
+let adminEdits={};
+
+function openAdminLogin(){
+  document.getElementById('admin-pin-input').value='';
+  document.getElementById('admin-pin-error').style.display='none';
+  document.getElementById('modal-admin-login').classList.add('open');
+  setTimeout(()=>document.getElementById('admin-pin-input').focus(),200);
+}
+function closeAdminLogin(){ document.getElementById('modal-admin-login').classList.remove('open'); }
+function checkAdminPin(){
+  if(document.getElementById('admin-pin-input').value===ADMIN_PIN){
+    closeAdminLogin(); openAdminPanel();
+  } else {
+    document.getElementById('admin-pin-error').style.display='block';
+    document.getElementById('admin-pin-input').value='';
+    document.getElementById('admin-pin-input').focus();
+  }
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const pin=document.getElementById('admin-pin-input');
+  if(pin) pin.addEventListener('keydown',e=>{if(e.key==='Enter')checkAdminPin();});
+});
+
+function openAdminPanel(){
+  adminEdits={};
+  renderAdminList();
+  showScreen('screen-admin');
+}
+
+function renderAdminList(){
+  const list=document.getElementById('admin-valve-list');
+  list.innerHTML='';
+  VALVE_GROUPS.forEach(g=>{
+    const hdr=document.createElement('div');
+    hdr.className='admin-group-hdr'; hdr.textContent=g.name; list.appendChild(hdr);
+    const card=document.createElement('div');
+    card.style.cssText='background:white;border-radius:0 0 8px 8px;margin-bottom:6px;box-shadow:0 1px 4px rgba(0,0,0,.05);overflow:hidden;';
+    g.valves.forEach(v=>{
+      const vKey=v.item||v.t;
+      const effectivePos=adminEdits[vKey]!==undefined?adminEdits[vKey]:getValvePos(vKey,v.pos);
+      const safeKey=vKey.replace(/[^a-z0-9]/gi,'_');
+      const desc=v.item?(v.eq||v.t):v.t;
+      const row=document.createElement('div');
+      row.className='admin-pos-row'; row.id='arow-'+safeKey;
+      row.innerHTML=
+        '<div class="admin-pos-info">'+
+          '<div class="admin-pos-name">'+vKey+'</div>'+
+          '<div class="admin-pos-type">'+desc+'</div>'+
+        '</div>'+
+        '<span class="admin-changed-badge" id="badge-'+safeKey+'">MODIFICADA</span>'+
+        '<div class="admin-toggle">'+
+          '<button id="abtn-a-'+safeKey+'" class="'+(effectivePos==='A'?'active-a':'')+'" data-vkey="'+safeKey+'" data-pos="A" onclick="adminBtnClick(this)">✓ ABIERTA</button>'+
+          '<button id="abtn-c-'+safeKey+'" class="'+(effectivePos==='C'?'active-c':'')+'" data-vkey="'+safeKey+'" data-pos="C" onclick="adminBtnClick(this)">✗ CERRADA</button>'+
+        '</div>';
+      card.appendChild(row);
+    });
+    list.appendChild(card);
+  });
+  updateAdminSaveBtn();
+}
+
+function adminBtnClick(btn){
+  const safeKey=btn.dataset.vkey; const pos=btn.dataset.pos;
+  let realKey='';
+  VALVE_GROUPS.forEach(g=>g.valves.forEach(v=>{
+    const vk=v.item||v.t;
+    if(vk.replace(/[^a-z0-9]/gi,'_')===safeKey) realKey=vk;
+  }));
+  if(realKey) setAdminPos(realKey,pos,safeKey);
+}
+
+function setAdminPos(vKey,pos,safeKey){
+  const currentEff=getValvePos(vKey,(()=>{let p='A';VALVE_GROUPS.forEach(g=>g.valves.forEach(v=>{if((v.item||v.t)===vKey)p=v.pos;}));return p;})());
+  if(pos===currentEff){ delete adminEdits[vKey]; }
+  else { adminEdits[vKey]=pos; }
+  if(!safeKey) safeKey=vKey.replace(/[^a-z0-9]/gi,'_');
+  const btnA=document.getElementById('abtn-a-'+safeKey);
+  const btnC=document.getElementById('abtn-c-'+safeKey);
+  if(btnA) btnA.className=pos==='A'?'active-a':'';
+  if(btnC) btnC.className=pos==='C'?'active-c':'';
+  const badge=document.getElementById('badge-'+safeKey);
+  const row=document.getElementById('arow-'+safeKey);
+  const isChanged=adminEdits[vKey]!==undefined;
+  if(badge) badge.classList.toggle('visible',isChanged);
+  if(row) row.style.background=isChanged?'rgba(245,196,0,0.08)':'white';
+  updateAdminSaveBtn();
+}
+
+function updateAdminSaveBtn(){
+  const count=Object.keys(adminEdits).length;
+  const btn=document.getElementById('admin-save-btn');
+  if(!btn) return;
+  if(count>0){
+    btn.textContent='✓ GUARDAR '+count+' CAMBIO'+(count>1?'S':'')+' Y SALIR';
+    btn.style.background='linear-gradient(135deg,#00963F,#007A6E)';
+    btn.style.color='white'; btn.style.boxShadow='0 4px 14px rgba(0,150,63,.35)';
+  } else {
+    btn.textContent='← VOLVER SIN CAMBIOS';
+    btn.style.background='var(--gray-200)'; btn.style.color='var(--gray-500)'; btn.style.boxShadow='none';
+  }
+}
+
+function saveAdminChanges(){
+  if(Object.keys(adminEdits).length===0){ showScreen('screen-home'); return; }
+  const existing=loadPosOverrides();
+  Object.entries(adminEdits).forEach(([k,v])=>{existing[k]=v;});
+  savePosOverrides(existing);
+  Object.entries(adminEdits).forEach(([item,pos])=>{pushEstado(item,pos);});
+  adminEdits={};
+  showScreen('screen-home');
+  showToast('✓ Estados actualizados y sincronizados','ok');
 }
 
 if('serviceWorker' in navigator){
